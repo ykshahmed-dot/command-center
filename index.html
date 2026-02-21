@@ -233,8 +233,15 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <div class="nav-item" onclick="openAddProject()" style="color:var(--text3);border:1px dashed var(--border);margin-top:4px;">
         <span class="icon">+</span>New Project
       </div>
-      <div class="nav-item" onclick="openNewFolder()" style="color:var(--text3);border:1px dashed var(--border);margin-top:4px;">
+      <div class="nav-item" onclick="toggleSidebarNewFolder()" style="color:var(--text3);border:1px dashed var(--border);margin-top:4px;" id="new-folder-btn">
         <span class="icon">▸</span>New Folder
+      </div>
+      <div id="sidebar-new-folder-panel" style="display:none;padding:8px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;margin-top:4px;gap:6px;flex-direction:column;">
+        <input class="field-input" id="sidebar-folder-name-inp" placeholder="Folder name…" style="font-size:12px;padding:6px 10px;" onkeydown="if(event.key==='Enter')createSidebarFolder();if(event.key==='Escape')toggleSidebarNewFolder();">
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-ghost" onclick="toggleSidebarNewFolder()" style="font-size:11px;padding:4px 8px;flex:1;">Cancel</button>
+          <button class="btn btn-primary" onclick="createSidebarFolder()" style="font-size:11px;padding:4px 8px;flex:1;">Create</button>
+        </div>
       </div>
     </div>
     <div class="sidebar-footer">
@@ -514,10 +521,18 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <div class="modal-header"><div class="modal-title" id="project-modal-title">◎ New Project</div><span class="modal-close" onclick="closeModal('project-modal')">×</span></div>
     <div class="modal-body">
       <div><div class="field-label">Project Name *</div><input class="field-input" id="proj-name-inp" placeholder="e.g. Clinisynq"></div>
-      <div style="margin-top:10px;"><div class="field-label">Folder <span style="color:var(--text3);font-weight:400;">(optional — group projects together)</span></div>
+      <div style="margin-top:10px;">
+        <div class="field-label">Folder <span style="color:var(--text3);font-weight:400;">(optional)</span></div>
         <div style="display:flex;gap:8px;">
-          <input class="field-input" id="proj-folder-inp" placeholder="e.g. Work, School, Side Projects" style="flex:1;" list="folder-suggestions">
-          <datalist id="folder-suggestions"></datalist>
+          <select class="field-select" id="proj-folder-inp" style="flex:1;"></select>
+          <button class="btn btn-ghost" onclick="openInlineNewFolder()" style="padding:6px 10px;font-size:13px;flex-shrink:0;" title="New folder">+ Folder</button>
+        </div>
+        <div id="proj-new-folder-panel" style="display:none;margin-top:8px;background:var(--surface2);border:1px solid var(--border2);border-radius:9px;padding:10px;gap:6px;flex-direction:column;">
+          <input class="field-input" id="proj-new-folder-name" placeholder="Folder name…" style="font-size:12px;padding:7px 10px;">
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-ghost" onclick="closeInlineNewFolder()" style="font-size:11px;padding:4px 10px;">Cancel</button>
+            <button class="btn btn-primary" onclick="createInlineFolder()" style="font-size:11px;padding:4px 10px;flex:1;">Create Folder</button>
+          </div>
         </div>
       </div>
       <div><div class="field-label">Description</div><input class="field-input" id="proj-desc-inp" placeholder="One-line description…"></div>
@@ -729,7 +744,8 @@ function afterProjectSaved(name){populateProjectDropdowns(name);}
 function renderSidebarProjects(){
   const folderStates=JSON.parse(localStorage.getItem('cc_folder_states')||'{}');
   // Get all folders in order, then ungrouped
-  const folders=[...new Set(projects.map(p=>p.folder||'').filter(Boolean))];
+  const storedFolders=JSON.parse(localStorage.getItem('cc_folders')||'[]');
+  const folders=[...new Set([...storedFolders,...projects.map(p=>p.folder||'').filter(Boolean)])];
   let html='';
   folders.forEach(folder=>{
     const collapsed=folderStates[folder]===false;
@@ -828,20 +844,27 @@ function sidebarFolderDrop(e,folder){
   const p=projects.find(x=>x.name===draggedProj);
   if(p){p.folder=folder;saveProjects();renderSidebarProjects();renderProjects();showToast('◎',`Moved to "${folder}"`);}
 }
-// ── NEW FOLDER ──
-function openNewFolder(){
-  const name=prompt('Folder name:');
-  if(!name||!name.trim())return;
-  const fname=name.trim();
-  // Check duplicate
-  const existing=[...new Set(projects.map(p=>p.folder||'').filter(Boolean))];
-  if(existing.includes(fname)){showToast('⚠','Folder already exists');return;}
-  // Create folder by assigning first unassigned project (or just record it)
-  // We track folders as a separate list
-  let folderList=JSON.parse(localStorage.getItem('cc_folders')||'[]');
-  if(!folderList.includes(fname))folderList.push(fname);
-  localStorage.setItem('cc_folders',JSON.stringify(folderList));
-  renderSidebarProjects();renderProjects();showToast('▸',`Folder "${fname}" created`);
+// ── NEW FOLDER (sidebar) ──
+function toggleSidebarNewFolder(){
+  const panel=document.getElementById('sidebar-new-folder-panel');
+  if(!panel)return;
+  const open=panel.style.display==='flex';
+  panel.style.display=open?'none':'flex';
+  if(!open)setTimeout(()=>document.getElementById('sidebar-folder-name-inp')?.focus(),60);
+}
+function createSidebarFolder(){
+  const inp=document.getElementById('sidebar-folder-name-inp');
+  const name=inp?.value.trim();
+  if(!name){if(inp)inp.style.borderColor='var(--rose)';return;}
+  if(getAllFolders().includes(name)){showToast('⚠','Folder already exists');return;}
+  const stored=JSON.parse(localStorage.getItem('cc_folders')||'[]');
+  stored.push(name);
+  localStorage.setItem('cc_folders',JSON.stringify(stored));
+  if(inp){inp.value='';inp.style.borderColor='';}
+  document.getElementById('sidebar-new-folder-panel').style.display='none';
+  renderSidebarProjects();renderProjects();
+  updateFolderSuggestions();
+  showToast('▸','Folder "'+name+'" created');
 }
 
 function setTheme(t,el){currentTheme=t;document.body.setAttribute('data-theme',t);document.querySelectorAll('.theme-btn').forEach(b=>b.classList.remove('active'));if(el)el.classList.add('active');localStorage.setItem('cc_theme',t);}
@@ -1033,51 +1056,52 @@ function renderSuggestions(){
 }
 function quickSchedule(taskId,day){
   const t=tasks.find(x=>x.id===taskId);if(!t)return;
-  const colorMap={Clinisynq:'tb-purple',Research:'tb-green','Medical School':'tb-sky',Personal:'tb-rose'};
   const dayBlocks=timeBlocks.filter(b=>b.day===day).sort((a,b)=>a.start.localeCompare(b.start));
   let startH=8;if(dayBlocks.length){const[h]=dayBlocks[dayBlocks.length-1].end.split(':').map(Number);startH=h;}
   if(startH<8)startH=8;if(startH>=18)startH=8;
   const s=String(startH).padStart(2,'0')+':00',e=String(Math.min(startH+2,20)).padStart(2,'0')+':00';
-  timeBlocks.push({id:uid(),label:t.name,day,start:s,end:e,color:colorMap[t.project]||'tb-purple',notes:''});
+  timeBlocks.push({id:uid(),label:t.name,day,start:s,end:e,color:'tb-purple',notes:''});
   activeDay=day;save();switchTab('timeblock',document.querySelectorAll('.nav-item')[2]);showToast('◷',`Scheduled for ${day} at ${s}`);
 }
 
 function renderProjects(){
-  const pc=projColor();
   const makeCard=p=>{
     const all=tasks.filter(t=>t.project===p.name),done=all.filter(t=>t.status==='done').length,pct=all.length?Math.round(done/all.length*100):0;
+    const c=p.color||'#888';
     return `<div class="proj-card" onclick="filterProject('${p.name}')">
       <div class="proj-card-top">
-        <span class="proj-icon">${p.icon}</span>
-        <span class="proj-name" style="color:${p.color}">${p.name}</span>
+        <span class="proj-icon">${p.icon||'◆'}</span>
+        <span class="proj-name" style="color:${c}">${p.name}</span>
         <span onclick="event.stopPropagation();openEditProject('${p.name}')" style="margin-left:auto;color:var(--text3);cursor:pointer;font-size:13px;">✎</span>
       </div>
       <div class="proj-desc">${p.desc||'No description.'}</div>
-      <div class="proj-progress-bar"><div class="proj-progress-fill" style="width:${pct}%;background:${p.color}"></div></div>
+      <div class="proj-progress-bar"><div class="proj-progress-fill" style="width:${pct}%;background:${c}"></div></div>
       <div class="proj-meta"><span>${all.length} tasks</span><span>${pct}% done</span></div>
     </div>`;
   };
-  // Group by folder
   const storedFolders=JSON.parse(localStorage.getItem('cc_folders')||'[]');
-  const folders=[...new Set([...storedFolders,...projects.map(p=>p.folder||'').filter(Boolean)])].sort((a,b)=>a===''?1:b===''?-1:a.localeCompare(b));
-  let html='';
+  const namedFolders=[...new Set([...storedFolders,...projects.map(p=>p.folder).filter(Boolean)])].sort();
   const folderStates=JSON.parse(localStorage.getItem('cc_folder_states')||'{}');
-  folders.forEach(folder=>{
-    const folderProjs=projects.filter(p=>(p.folder||'')=== folder);
-    if(folder){
-      const collapsed=folderStates[folder]===false;
-      html+=`<div style="margin-bottom:${collapsed?8:18}px;">
-        <div onclick="toggleFolder('${folder}')" style="display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer;user-select:none;">
-          <span style="font-size:11px;color:var(--text3);transition:transform 0.2s;display:inline-block;transform:rotate(${collapsed?'-90':'0'}deg)">▾</span>
-          <span style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--text2);font-weight:500;">${folder}</span>
-          <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);">${folderProjs.length}</span>
-        </div>
-        ${collapsed?'':`<div class="projects-grid">${folderProjs.map(makeCard).join('')}</div>`}
-      </div>`;
-    } else {
-      html+=`<div class="projects-grid" style="margin-bottom:18px;">${folderProjs.map(makeCard).join('')}</div>`;
-    }
+  let html='';
+  // 1. Render named folders
+  namedFolders.forEach(folder=>{
+    const folderProjs=projects.filter(p=>p.folder===folder);
+    const collapsed=folderStates[folder]===false;
+    html+=`<div style="margin-bottom:${collapsed?8:18}px;">
+      <div onclick="toggleFolder('${folder}')" style="display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer;user-select:none;">
+        <span style="font-size:11px;color:var(--text3);transition:transform 0.2s;display:inline-block;transform:rotate(${collapsed?'-90':'0'}deg)">▾</span>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--text2);font-weight:500;">${folder}</span>
+        <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);margin-left:4px;">${folderProjs.length}</span>
+      </div>
+      ${collapsed?'':`<div class="projects-grid">${folderProjs.length?folderProjs.map(makeCard).join(''):'<div style="color:var(--text3);font-size:12px;padding:8px 4px;">No projects in this folder yet.</div>'}</div>`}
+    </div>`;
   });
+  // 2. Always render ungrouped projects (no folder)
+  const ungrouped=projects.filter(p=>!p.folder);
+  if(ungrouped.length){
+    html+=`<div class="projects-grid" style="margin-bottom:18px;">${ungrouped.map(makeCard).join('')}</div>`;
+  }
+  // 3. New project button
   html+=`<div style="margin-top:4px;"><div class="proj-card" onclick="openAddProject()" style="border-style:dashed;display:flex;align-items:center;justify-content:center;gap:8px;color:var(--text3);min-height:80px;">
     <span style="font-size:22px;">+</span><span style="font-size:13px;font-weight:500;">New Project</span>
   </div></div>`;
@@ -1107,10 +1131,9 @@ function openAddProject(defaultFolder){
   editingProjectName=null;
   document.getElementById('project-modal-title').textContent='◎ New Project';
   document.getElementById('proj-name-inp').value='';document.getElementById('proj-desc-inp').value='';document.getElementById('proj-icon-inp').value='◆';
-  document.getElementById('proj-folder-inp').value=defaultFolder||'';
   document.getElementById('proj-delete-btn').style.display='none';
   buildColorPicker(PROJ_COLORS[0]);
-  updateFolderSuggestions();
+  updateFolderSuggestions(defaultFolder||'');
   document.getElementById('project-modal').classList.add('open');
   setTimeout(()=>document.getElementById('proj-name-inp').focus(),80);
 }
@@ -1119,16 +1142,45 @@ function openEditProject(name){
   editingProjectName=name;
   document.getElementById('project-modal-title').textContent='✎ Edit Project';
   document.getElementById('proj-name-inp').value=p.name;document.getElementById('proj-desc-inp').value=p.desc||'';document.getElementById('proj-icon-inp').value=p.icon||'◆';
-  document.getElementById('proj-folder-inp').value=p.folder||'';
   document.getElementById('proj-delete-btn').style.display='';
   buildColorPicker(p.color);
-  updateFolderSuggestions();
+  updateFolderSuggestions(p.folder||'');
   document.getElementById('project-modal').classList.add('open');
 }
-function updateFolderSuggestions(){
-  const folders=[...new Set(projects.map(p=>p.folder||'').filter(Boolean))];
-  const dl=document.getElementById('folder-suggestions');
-  if(dl)dl.innerHTML=folders.map(f=>`<option value="${f}">`).join('');
+function getAllFolders(){
+  const stored=JSON.parse(localStorage.getItem('cc_folders')||'[]');
+  const fromProjs=projects.map(p=>p.folder||'').filter(Boolean);
+  return [...new Set([...stored,...fromProjs])];
+}
+function updateFolderSuggestions(selectedFolder){
+  const sel=document.getElementById('proj-folder-inp');
+  if(!sel)return;
+  const folders=getAllFolders();
+  sel.innerHTML='<option value="">— No folder —</option>'+folders.map(f=>`<option value="${f}">${f}</option>`).join('');
+  if(selectedFolder)sel.value=selectedFolder;
+}
+function openInlineNewFolder(){
+  const panel=document.getElementById('proj-new-folder-panel');
+  if(panel){panel.style.display='flex';setTimeout(()=>document.getElementById('proj-new-folder-name')?.focus(),60);}
+}
+function closeInlineNewFolder(){
+  const panel=document.getElementById('proj-new-folder-panel');if(panel)panel.style.display='none';
+  const inp=document.getElementById('proj-new-folder-name');if(inp)inp.value='';
+}
+function createInlineFolder(){
+  const inp=document.getElementById('proj-new-folder-name');
+  const name=inp?.value.trim();
+  if(!name){if(inp)inp.style.borderColor='var(--rose)';return;}
+  const existing=getAllFolders();
+  if(existing.includes(name)){showToast('⚠','Folder already exists');return;}
+  // Save to folder list
+  const stored=JSON.parse(localStorage.getItem('cc_folders')||'[]');
+  stored.push(name);
+  localStorage.setItem('cc_folders',JSON.stringify(stored));
+  closeInlineNewFolder();
+  updateFolderSuggestions(name);
+  renderSidebarProjects();renderProjects();
+  showToast('▸','Folder "'+name+'" created');
 }
 function saveProject(){
   const name=document.getElementById('proj-name-inp').value.trim();if(!name){document.getElementById('proj-name-inp').style.borderColor='var(--rose)';return;}
