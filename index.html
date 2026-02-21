@@ -14,26 +14,26 @@
 html,body{width:100%;height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);overflow:hidden;}
 body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 20% -10%,var(--grad1) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 80% 100%,var(--grad2) 0%,transparent 50%);pointer-events:none;z-index:0;}
 .shell{display:flex;width:100%;height:100vh;position:relative;z-index:1;overflow:hidden;}
-.sidebar{width:234px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;height:100%;}
+.sidebar{width:256px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;height:100%;}
 .sidebar-header{padding:18px 16px 13px;border-bottom:1px solid var(--border);flex-shrink:0;}
 .logo{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;letter-spacing:-0.3px;display:flex;align-items:center;gap:9px;}
 .logo-mark{width:26px;height:26px;background:var(--accent);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;box-shadow:0 0 16px color-mix(in srgb,var(--accent) 35%,transparent);}
 .sidebar-date{font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);margin-top:4px;letter-spacing:0.5px;}
-.sidebar-section{padding:11px 9px 5px;flex-shrink:0;}
+.sidebar-section{padding:12px 10px 6px;flex-shrink:0;}
 .sidebar-label{font-family:'DM Mono',monospace;font-size:9px;font-weight:500;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;padding:0 7px;margin-bottom:3px;}
-.nav-item{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:7px;cursor:pointer;font-size:12.5px;color:var(--text2);transition:all 0.15s;user-select:none;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--text2);transition:all 0.15s;user-select:none;}
 .nav-item:hover{background:var(--surface2);color:var(--text);}
 .nav-item.active{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent);}
 .nav-item .icon{font-size:13px;width:17px;text-align:center;flex-shrink:0;}
 .project-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 .sidebar-folder{margin-bottom:2px;}
-.sidebar-folder-header{display:flex;align-items:center;gap:6px;padding:5px 9px;border-radius:7px;cursor:pointer;color:var(--text3);font-family:'DM Mono',monospace;font-size:9.5px;letter-spacing:0.8px;text-transform:uppercase;user-select:none;transition:background 0.1s;}
+.sidebar-folder-header{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:8px;cursor:pointer;color:var(--text2);font-family:'Syne',sans-serif;font-size:11.5px;font-weight:700;letter-spacing:0;text-transform:none;user-select:none;transition:background 0.1s;}
 .sidebar-folder-header:hover{background:var(--surface2);color:var(--text2);}
 .sidebar-folder-header.drag-over{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent);}
-.sidebar-folder-arrow{font-size:9px;transition:transform 0.18s;flex-shrink:0;}
+.sidebar-folder-arrow{font-size:10px;transition:transform 0.18s;flex-shrink:0;color:var(--text3);}
 .sidebar-folder-arrow.collapsed{transform:rotate(-90deg);}
-.sidebar-folder-children{padding-left:4px;overflow:hidden;}
-.sidebar-proj-item{display:flex;align-items:center;gap:8px;padding:6px 9px;border-radius:7px;cursor:pointer;font-size:12.5px;color:var(--text2);transition:all 0.12s;user-select:none;position:relative;}
+.sidebar-folder-children{padding-left:10px;overflow:hidden;border-left:2px solid var(--border);margin-left:14px;}
+.sidebar-proj-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--text2);transition:all 0.12s;user-select:none;position:relative;}
 .sidebar-proj-item:hover{background:var(--surface2);color:var(--text);}
 .sidebar-proj-item.dragging{opacity:0.4;}
 .sidebar-proj-item.drag-over-above::before{content:'';position:absolute;top:-1px;left:9px;right:9px;height:2px;background:var(--accent);border-radius:1px;}
@@ -136,16 +136,31 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .day-tab-dot{width:3px;height:3px;border-radius:50%;background:var(--accent);margin:3px auto 0;opacity:0;}
 .day-tab.has-blocks .day-tab-dot{opacity:1;}
 .day-tab.active .day-tab-dot{opacity:0;}
-.projects-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;}
-.proj-card{border:1px solid var(--border);border-radius:11px;padding:14px;cursor:pointer;transition:all 0.2s;background:var(--surface2);}
-.proj-card:hover{border-color:var(--border2);transform:translateY(-2px);}
-.proj-card-top{display:flex;align-items:center;gap:7px;margin-bottom:9px;}
-.proj-icon{font-size:18px;}
-.proj-name{font-family:'Syne',sans-serif;font-size:14px;font-weight:800;}
-.proj-desc{font-size:11.5px;color:var(--text2);margin-bottom:10px;line-height:1.5;}
-.proj-progress-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:8px;}
+.projects-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px;}
+.folder-section{margin-bottom:28px;}
+.folder-section-header{display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:14px 18px;background:var(--surface);border:1px solid var(--border);border-radius:12px;cursor:pointer;user-select:none;min-height:52px;}
+.folder-section-header:hover{border-color:var(--border2);}
+.folder-section-arrow{font-size:14px;color:var(--text3);transition:transform 0.18s;flex-shrink:0;}
+.folder-section-name{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.folder-section-count{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);background:var(--surface2);padding:2px 8px;border-radius:20px;}
+.folder-section-actions{display:flex;gap:6px;margin-left:auto;}
+.folder-action-btn{font-size:11px;color:var(--text3);padding:2px 8px;border-radius:5px;border:1px solid transparent;cursor:pointer;transition:all 0.12s;}
+.folder-action-btn:hover{background:var(--surface2);color:var(--text);border-color:var(--border);}
+.folder-action-btn.del:hover{color:var(--rose);border-color:var(--rose);}
+.proj-card{border:1px solid var(--border);border-radius:14px;padding:22px;cursor:pointer;transition:all 0.2s;background:var(--surface);position:relative;min-height:160px;display:flex;flex-direction:column;}
+.proj-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,0,0,0.12);}
+.proj-card-top{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.proj-icon{font-size:22px;}
+.proj-name{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;line-height:1.2;}
+.proj-desc{font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6;min-height:20px;}
+.proj-progress-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:10px;}
 .proj-progress-fill{height:100%;border-radius:2px;transition:width 0.5s;}
-.proj-meta{display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:9.5px;color:var(--text3);}
+.proj-meta{display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:10.5px;color:var(--text3);margin-top:auto;}
+.proj-card-actions{position:absolute;top:12px;right:12px;display:flex;gap:4px;opacity:0;transition:opacity 0.15s;}
+.proj-card:hover .proj-card-actions{opacity:1;}
+.proj-card-btn{font-size:12px;color:var(--text3);padding:3px 7px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;transition:all 0.12s;}
+.proj-card-btn:hover{color:var(--text);border-color:var(--border2);}
+.proj-card-btn.del:hover{color:var(--rose);border-color:var(--rose);}
 .sug-card{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:13px 16px;display:flex;align-items:flex-start;gap:12px;cursor:pointer;transition:all 0.18s;position:relative;overflow:hidden;margin-bottom:10px;}
 .sug-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:3px 0 0 3px;}
 .sug-card:hover{border-color:var(--border2);transform:translateY(-1px);box-shadow:0 4px 20px rgba(0,0,0,0.15);}
@@ -238,6 +253,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       </div>
       <div id="sidebar-new-folder-panel" style="display:none;padding:8px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;margin-top:4px;gap:6px;flex-direction:column;">
         <input class="field-input" id="sidebar-folder-name-inp" placeholder="Folder name…" style="font-size:12px;padding:6px 10px;" onkeydown="if(event.key==='Enter')createSidebarFolder();if(event.key==='Escape')toggleSidebarNewFolder();">
+        <select class="field-input" id="sidebar-folder-parent-sel" style="font-size:12px;padding:6px 10px;"></select>
         <div style="display:flex;gap:6px;">
           <button class="btn btn-ghost" onclick="toggleSidebarNewFolder()" style="font-size:11px;padding:4px 8px;flex:1;">Cancel</button>
           <button class="btn btn-primary" onclick="createSidebarFolder()" style="font-size:11px;padding:4px 8px;flex:1;">Create</button>
@@ -338,7 +354,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
             <div><div class="section-title">Projects</div><div class="section-sub" style="margin-bottom:0;">Click ✎ to edit or + to add new</div></div>
             <button class="btn btn-primary" onclick="openAddProject()">+ New Project</button>
           </div>
-          <div class="projects-grid" id="projects-grid"></div>
+          <div id="projects-grid"></div>
         </div>
 
         <!-- UPDATES LOG -->
@@ -515,6 +531,18 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   </div>
 </div>
 
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal" style="max-width:360px;">
+    <div class="modal-header"><div class="modal-title" id="confirm-title">Confirm</div></div>
+    <div class="modal-body"><p id="confirm-msg" style="font-size:13px;color:var(--text2);line-height:1.6;"></p></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('confirm-modal');_confirmReject&&_confirmReject()">Cancel</button>
+      <button class="btn btn-primary" id="confirm-ok-btn" onclick="closeModal('confirm-modal');_confirmResolve&&_confirmResolve()" style="background:var(--rose);box-shadow:none;">Delete</button>
+    </div>
+  </div>
+</div>
+
 <!-- ADD/EDIT PROJECT MODAL -->
 <div class="modal-overlay" id="project-modal">
   <div class="modal">
@@ -639,7 +667,7 @@ const DEFAULT_PROJECTS=[];
 
 // ── CLEAR ALL DATA ON FIRST RUN ──
 (function(){
-  const VERSION='v3-clean';
+  const VERSION='v4-clean';
   if(localStorage.getItem('cc_version')!==VERSION){
     ['cc_tasks','cc_tb','cc_updates','cc_projects','cc_folders','cc_folder_states'].forEach(k=>localStorage.removeItem(k));
     localStorage.setItem('cc_version',VERSION);
@@ -743,35 +771,38 @@ document.addEventListener('DOMContentLoaded',()=>{
 function afterProjectSaved(name){populateProjectDropdowns(name);}
 function renderSidebarProjects(){
   const folderStates=JSON.parse(localStorage.getItem('cc_folder_states')||'{}');
-  // Get all folders in order, then ungrouped
-  const storedFolders=JSON.parse(localStorage.getItem('cc_folders')||'[]');
-  const folders=[...new Set([...storedFolders,...projects.map(p=>p.folder||'').filter(Boolean)])];
-  let html='';
-  folders.forEach(folder=>{
-    const collapsed=folderStates[folder]===false;
-    const folderProjs=projects.filter(p=>p.folder===folder);
-    html+=`<div class="sidebar-folder" id="sf-${CSS.escape(folder)}">
-      <div class="sidebar-folder-header" 
-           onclick="toggleSidebarFolder('${folder}')"
-           ondragover="sidebarFolderDragOver(event,'${folder}')"
-           ondragleave="sidebarFolderDragLeave(event,'${folder}')"
-           ondrop="sidebarFolderDrop(event,'${folder}')">
-        <span class="sidebar-folder-arrow ${collapsed?'collapsed':''}">▾</span>
-        <span style="flex:1">${folder}</span>
-        <span style="font-size:9px;opacity:0.5">${folderProjs.length}</span>
-      </div>
-      <div class="sidebar-folder-children" style="display:${collapsed?'none':'block'}">
-        ${folderProjs.map(p=>projSidebarItem(p)).join('')}
-      </div>
-    </div>`;
-  });
-  // Ungrouped projects
+  getAllFolders(); // trigger migration
+  function renderFolderGroup(parentId,depth){
+    const children=getFolderChildren(parentId);
+    let html='';
+    children.forEach(folder=>{
+      const collapsed=folderStates[folder.id]===false;
+      const folderProjs=projects.filter(p=>p.folder===folder.id);
+      const indent=depth*8;
+      html+=`<div class="sidebar-folder" id="sf-${CSS.escape(folder.id)}" style="${indent?'margin-left:'+indent+'px;':''}">
+        <div class="sidebar-folder-header"
+             onclick="toggleSidebarFolder('${folder.id}')"
+             ondragover="sidebarFolderDragOver(event,'${folder.id}')"
+             ondragleave="sidebarFolderDragLeave(event,'${folder.id}')"
+             ondrop="sidebarFolderDrop(event,'${folder.id}')">
+          <span class="sidebar-folder-arrow ${collapsed?'collapsed':''}">▾</span>
+          <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${folder.id}</span>
+          <span style="font-size:10px;color:var(--text3);flex-shrink:0;">${folderProjs.length}</span>
+        </div>
+        <div class="sidebar-folder-children" style="display:${collapsed?'none':'block'}">
+          ${folderProjs.map(p=>projSidebarItem(p)).join('')}
+          ${renderFolderGroup(folder.id,depth+1)}
+        </div>
+      </div>`;
+    });
+    return html;
+  }
+  let html=renderFolderGroup(null,0);
   const ungrouped=projects.filter(p=>!p.folder);
   if(ungrouped.length){
     html+=`<div class="sidebar-no-folder">${ungrouped.map(p=>projSidebarItem(p)).join('')}</div>`;
   }
   document.getElementById('sidebar-projects').innerHTML=html;
-  // Attach drag listeners after render
   document.querySelectorAll('.sidebar-proj-item[draggable]').forEach(el=>attachProjDrag(el));
 }
 function projSidebarItem(p){
@@ -850,17 +881,26 @@ function toggleSidebarNewFolder(){
   if(!panel)return;
   const open=panel.style.display==='flex';
   panel.style.display=open?'none':'flex';
-  if(!open)setTimeout(()=>document.getElementById('sidebar-folder-name-inp')?.focus(),60);
+  if(!open){
+    // Populate parent selector
+    const sel=document.getElementById('sidebar-folder-parent-sel');
+    if(sel){
+      const folders=getAllFolders();
+      sel.innerHTML='<option value="">— Top level —</option>'+folders.map(f=>`<option value="${f.id}">${f.id}</option>`).join('');
+    }
+    setTimeout(()=>document.getElementById('sidebar-folder-name-inp')?.focus(),60);
+  }
 }
 function createSidebarFolder(){
   const inp=document.getElementById('sidebar-folder-name-inp');
   const name=inp?.value.trim();
   if(!name){if(inp)inp.style.borderColor='var(--rose)';return;}
-  if(getAllFolders().includes(name)){showToast('⚠','Folder already exists');return;}
-  const stored=JSON.parse(localStorage.getItem('cc_folders')||'[]');
-  stored.push(name);
-  localStorage.setItem('cc_folders',JSON.stringify(stored));
+  const parentSel=document.getElementById('sidebar-folder-parent-sel');
+  const parent=parentSel?parentSel.value||null:null;
+  if(!addFolder(name,parent))return;
   if(inp){inp.value='';inp.style.borderColor='';}
+  const parentEl=document.getElementById('sidebar-folder-parent-sel');
+  if(parentEl)parentEl.value='';
   document.getElementById('sidebar-new-folder-panel').style.display='none';
   renderSidebarProjects();renderProjects();
   updateFolderSuggestions();
@@ -1067,43 +1107,57 @@ function quickSchedule(taskId,day){
 function renderProjects(){
   const makeCard=p=>{
     const all=tasks.filter(t=>t.project===p.name),done=all.filter(t=>t.status==='done').length,pct=all.length?Math.round(done/all.length*100):0;
-    const c=p.color||'#888';
+    const col=p.color||'#888';
     return `<div class="proj-card" onclick="filterProject('${p.name}')">
+      <div class="proj-card-actions">
+        <span class="proj-card-btn" onclick="event.stopPropagation();openEditProject('${p.name}')">✎ Edit</span>
+        <span class="proj-card-btn del" onclick="event.stopPropagation();confirmDeleteProject('${p.name}')">× Delete</span>
+      </div>
       <div class="proj-card-top">
         <span class="proj-icon">${p.icon||'◆'}</span>
-        <span class="proj-name" style="color:${c}">${p.name}</span>
-        <span onclick="event.stopPropagation();openEditProject('${p.name}')" style="margin-left:auto;color:var(--text3);cursor:pointer;font-size:13px;">✎</span>
+        <span class="proj-name" style="color:${col}">${p.name}</span>
       </div>
       <div class="proj-desc">${p.desc||'No description.'}</div>
-      <div class="proj-progress-bar"><div class="proj-progress-fill" style="width:${pct}%;background:${c}"></div></div>
-      <div class="proj-meta"><span>${all.length} tasks</span><span>${pct}% done</span></div>
+      <div class="proj-progress-bar"><div class="proj-progress-fill" style="width:${pct}%;background:${col}"></div></div>
+      <div class="proj-meta"><span>${all.length} task${all.length!==1?'s':''}</span><span>${pct}% done</span></div>
     </div>`;
   };
-  const storedFolders=JSON.parse(localStorage.getItem('cc_folders')||'[]');
-  const namedFolders=[...new Set([...storedFolders,...projects.map(p=>p.folder).filter(Boolean)])].sort();
+  getAllFolders(); // trigger migration
   const folderStates=JSON.parse(localStorage.getItem('cc_folder_states')||'{}');
-  let html='';
-  // 1. Render named folders
-  namedFolders.forEach(folder=>{
-    const folderProjs=projects.filter(p=>p.folder===folder);
-    const collapsed=folderStates[folder]===false;
-    html+=`<div style="margin-bottom:${collapsed?8:18}px;">
-      <div onclick="toggleFolder('${folder}')" style="display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer;user-select:none;">
-        <span style="font-size:11px;color:var(--text3);transition:transform 0.2s;display:inline-block;transform:rotate(${collapsed?'-90':'0'}deg)">▾</span>
-        <span style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--text2);font-weight:500;">${folder}</span>
-        <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);margin-left:4px;">${folderProjs.length}</span>
-      </div>
-      ${collapsed?'':`<div class="projects-grid">${folderProjs.length?folderProjs.map(makeCard).join(''):'<div style="color:var(--text3);font-size:12px;padding:8px 4px;">No projects in this folder yet.</div>'}</div>`}
-    </div>`;
-  });
-  // 2. Always render ungrouped projects (no folder)
+  function renderFolderSection(parentId,depth){
+    const children=getFolderChildren(parentId);
+    let html='';
+    children.forEach(folder=>{
+      const folderProjs=projects.filter(p=>p.folder===folder.id);
+      const collapsed=folderStates[folder.id]===false;
+      const indent=depth>0?`margin-left:${depth*20}px;`:'';
+      const headerSize=depth===0?'18px':'14px';
+      const headerWeight=depth===0?'800':'700';
+      html+=`<div class="folder-section" style="${indent}">
+        <div class="folder-section-header" onclick="toggleFolder('${folder.id}')">
+          <span class="folder-section-arrow" style="transform:rotate(${collapsed?'-90deg':'0deg'})">▾</span>
+          <span class="folder-section-name" style="font-size:${headerSize};font-weight:${headerWeight};">${folder.id}</span>
+          <span class="folder-section-count">${folderProjs.length} project${folderProjs.length!==1?'s':''}</span>
+          <div class="folder-section-actions" onclick="event.stopPropagation()">
+            <span class="folder-action-btn del" onclick="confirmDeleteFolder('${folder.id}')">× Delete</span>
+          </div>
+        </div>
+        ${collapsed?'':`<div>
+          ${getFolderChildren(folder.id).length?renderFolderSection(folder.id,depth+1):''}
+          <div class="projects-grid">${folderProjs.length?folderProjs.map(makeCard).join(''):'<div style="color:var(--text3);font-size:12px;padding:8px 4px;grid-column:1/-1;">No projects in this folder yet.</div>'}</div>
+        </div>`}
+      </div>`;
+    });
+    return html;
+  }
+  let html=renderFolderSection(null,0);
   const ungrouped=projects.filter(p=>!p.folder);
   if(ungrouped.length){
-    html+=`<div class="projects-grid" style="margin-bottom:18px;">${ungrouped.map(makeCard).join('')}</div>`;
+    if(getRootFolders().length) html+=`<div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin:4px 0 12px;">Ungrouped</div>`;
+    html+=`<div class="projects-grid" style="margin-bottom:20px;">${ungrouped.map(makeCard).join('')}</div>`;
   }
-  // 3. New project button
-  html+=`<div style="margin-top:4px;"><div class="proj-card" onclick="openAddProject()" style="border-style:dashed;display:flex;align-items:center;justify-content:center;gap:8px;color:var(--text3);min-height:80px;">
-    <span style="font-size:22px;">+</span><span style="font-size:13px;font-weight:500;">New Project</span>
+  html+=`<div class="projects-grid"><div class="proj-card" onclick="openAddProject()" style="border-style:dashed;background:transparent;display:flex;align-items:center;justify-content:center;gap:10px;color:var(--text3);min-height:120px;flex-direction:column;">
+    <span style="font-size:28px;line-height:1;">+</span><span style="font-size:13px;font-weight:500;">New Project</span>
   </div></div>`;
   document.getElementById('projects-grid').innerHTML=html;
 }
@@ -1148,15 +1202,48 @@ function openEditProject(name){
   document.getElementById('project-modal').classList.add('open');
 }
 function getAllFolders(){
-  const stored=JSON.parse(localStorage.getItem('cc_folders')||'[]');
+  // Migrate old flat array to object array if needed
+  let stored=JSON.parse(localStorage.getItem('cc_folders')||'[]');
+  if(stored.length&&typeof stored[0]==='string'){
+    stored=stored.map(n=>({id:n,parent:null}));
+    localStorage.setItem('cc_folders',JSON.stringify(stored));
+  }
+  // Also absorb any folder names used by projects but not in stored list
   const fromProjs=projects.map(p=>p.folder||'').filter(Boolean);
-  return [...new Set([...stored,...fromProjs])];
+  fromProjs.forEach(n=>{if(!stored.find(f=>f.id===n))stored.push({id:n,parent:null});});
+  return stored; // [{id,parent}]
 }
+function getFolderNames(){return getAllFolders().map(f=>f.id);}
+function saveFolders(folders){localStorage.setItem('cc_folders',JSON.stringify(folders));}
+function addFolder(name,parent=null){
+  const folders=getAllFolders();
+  if(folders.find(f=>f.id===name)){showToast('⚠','Folder already exists');return false;}
+  folders.push({id:name,parent});
+  saveFolders(folders);
+  return true;
+}
+function deleteFolder(name){
+  let folders=getAllFolders();
+  // Also reassign child folders to no parent
+  folders=folders.map(f=>f.parent===name?{...f,parent:null}:f).filter(f=>f.id!==name);
+  saveFolders(folders);
+  projects.forEach(p=>{if(p.folder===name)p.folder='';});
+  saveProjects();
+}
+function getFolderChildren(parentId){return getAllFolders().filter(f=>f.parent===parentId);}
+function getRootFolders(){return getAllFolders().filter(f=>!f.parent);}
 function updateFolderSuggestions(selectedFolder){
   const sel=document.getElementById('proj-folder-inp');
   if(!sel)return;
   const folders=getAllFolders();
-  sel.innerHTML='<option value="">— No folder —</option>'+folders.map(f=>`<option value="${f}">${f}</option>`).join('');
+  // Build indented options showing hierarchy
+  function buildOpts(parentId,depth){
+    return getFolderChildren(parentId).map(f=>{
+      const prefix='  '.repeat(depth);
+      return `<option value="${f.id}">${prefix}${depth>0?'↳ ':''}${f.id}</option>`+buildOpts(f.id,depth+1);
+    }).join('');
+  }
+  sel.innerHTML='<option value="">— No folder —</option>'+buildOpts(null,0);
   if(selectedFolder)sel.value=selectedFolder;
 }
 function openInlineNewFolder(){
@@ -1171,12 +1258,7 @@ function createInlineFolder(){
   const inp=document.getElementById('proj-new-folder-name');
   const name=inp?.value.trim();
   if(!name){if(inp)inp.style.borderColor='var(--rose)';return;}
-  const existing=getAllFolders();
-  if(existing.includes(name)){showToast('⚠','Folder already exists');return;}
-  // Save to folder list
-  const stored=JSON.parse(localStorage.getItem('cc_folders')||'[]');
-  stored.push(name);
-  localStorage.setItem('cc_folders',JSON.stringify(stored));
+  if(!addFolder(name,null))return;
   closeInlineNewFolder();
   updateFolderSuggestions(name);
   renderSidebarProjects();renderProjects();
@@ -1199,9 +1281,27 @@ function saveProject(){
 }
 function deleteProject(){
   if(!editingProjectName)return;
-  if(!confirm(`Delete "${editingProjectName}"? Tasks will remain but lose their project association.`))return;
-  projects=projects.filter(p=>p.name!==editingProjectName);
-  saveProjects();closeModal('project-modal');render();showToast('×','Project deleted');
+  showConfirm('Delete "'+editingProjectName+'"?','Tasks will remain but lose their project.').then(()=>{
+    projects=projects.filter(p=>p.name!==editingProjectName);
+    saveProjects();closeModal('project-modal');render();showToast('×','Project deleted');
+  }).catch(()=>{});
+}
+function confirmDeleteProject(name){
+  showConfirm('Delete "'+name+'"?','Tasks will remain but will lose their project association.').then(()=>{
+    projects=projects.filter(p=>p.name!==name);
+    saveProjects();render();showToast('×','"'+name+'" deleted');
+  }).catch(()=>{});
+}
+function confirmDeleteFolder(folder){
+  const projs=projects.filter(p=>p.folder===folder);
+  const children=getFolderChildren(folder);
+  let msg='';
+  if(projs.length) msg+=projs.length+' project(s) will become ungrouped. ';
+  if(children.length) msg+=children.length+' sub-folder(s) will become top-level. ';
+  if(!msg) msg='This folder is empty.';
+  showConfirm('Delete "'+folder+'"?',msg.trim()).then(()=>{
+    deleteFolder(folder);render();showToast('×','Folder deleted');
+  }).catch(()=>{});
 }
 
 // DRAWER
@@ -1436,6 +1536,16 @@ function saveUpdate(){
 function fmtDate(d){if(!d)return'';const date=new Date(d+'T00:00:00');const tday=new Date(now);tday.setHours(0,0,0,0);const diff=Math.round((date-tday)/86400000);if(diff===0)return'Today';if(diff===1)return'Tomorrow';if(diff===-1)return'Yesterday';if(diff<0)return`${Math.abs(diff)}d overdue`;if(diff<7)return`in ${diff}d`;return`${MONS[date.getMonth()]} ${date.getDate()}`;}
 function timeAgo(iso){const s=(Date.now()-new Date(iso))/1000;if(s<60)return'just now';if(s<3600)return`${Math.round(s/60)}m ago`;if(s<86400)return`${Math.round(s/3600)}h ago`;return`${Math.round(s/86400)}d ago`;}
 function fmtTimestamp(iso){const d=new Date(iso);const today=new Date();const yest=new Date(today);yest.setDate(today.getDate()-1);const hh=d.getHours()%12||12,mm=String(d.getMinutes()).padStart(2,'0'),ap=d.getHours()<12?'am':'pm';const ts=`${hh}:${mm} ${ap}`;if(d.toDateString()===today.toDateString())return`Today · ${ts}`;if(d.toDateString()===yest.toDateString())return`Yesterday · ${ts}`;return`${MONS[d.getMonth()]} ${d.getDate()} · ${ts}`;}
+let _confirmResolve=null,_confirmReject=null;
+function showConfirm(title,msg,okLabel='Delete'){
+  return new Promise((resolve,reject)=>{
+    _confirmResolve=resolve;_confirmReject=reject;
+    document.getElementById('confirm-title').textContent=title;
+    document.getElementById('confirm-msg').textContent=msg;
+    document.getElementById('confirm-ok-btn').textContent=okLabel;
+    document.getElementById('confirm-modal').classList.add('open');
+  });
+}
 let toastTimer;
 function showToast(icon,msg){const t=document.getElementById('toast');document.getElementById('toast-icon').textContent=icon;document.getElementById('toast-msg').textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2500);}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelectorAll('.modal-overlay').forEach(o=>o.classList.remove('open'));closeDrawer();}});
