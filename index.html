@@ -1055,11 +1055,13 @@ function render(){renderStats();renderDashTasks();renderDashTimeBlocks();renderD
 }
 let _currentFolder=null;
 function openNewTask(projName){
-  // Open new task modal and pre-select the project
-  document.getElementById('new-task-modal').classList.add('open');
+  populateProjectDropdowns(projName);
+  document.getElementById('add-task-modal').classList.add('open');
   setTimeout(()=>{
-    const sel=document.getElementById('new-task-project');
-    if(sel&&projName){populateProjectDropdowns(projName);sel.value=projName;}
+    if(projName){
+      const sel=document.getElementById('new-task-project');
+      if(sel)sel.value=projName;
+    }
     document.getElementById('new-task-name')?.focus();
   },80);
 }
