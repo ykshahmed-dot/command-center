@@ -39,6 +39,9 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .sidebar-proj-item.drag-over-above::before{content:'';position:absolute;top:-1px;left:9px;right:9px;height:2px;background:var(--accent);border-radius:1px;}
 .sidebar-proj-item.drag-over-below::after{content:'';position:absolute;bottom:-1px;left:9px;right:9px;height:2px;background:var(--accent);border-radius:1px;}
 .sidebar-no-folder{padding-left:0;}
+.sidebar-ungroup-zone{display:none;margin-top:4px;padding:7px 10px;border:1.5px dashed var(--border2);border-radius:8px;font-size:11px;color:var(--text3);text-align:center;cursor:default;transition:all 0.15s;}
+.sidebar-ungroup-zone.drag-active{display:block;}
+.sidebar-ungroup-zone.drag-over-zone{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,transparent);}
 .sidebar-footer{margin-top:auto;padding:13px 14px;border-top:1px solid var(--border);flex-shrink:0;}
 .theme-switcher{display:flex;gap:5px;margin-bottom:8px;}
 .theme-btn{flex:1;padding:5px 0;border-radius:6px;border:1.5px solid var(--border);cursor:pointer;font-size:10.5px;font-family:'DM Mono',monospace;text-align:center;color:var(--text2);background:var(--surface2);transition:all 0.15s;user-select:none;}
@@ -264,6 +267,12 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <div class="sidebar-section">
       <div class="sidebar-label">Projects</div>
       <div id="sidebar-projects"></div>
+      <div class="sidebar-ungroup-zone" id="sidebar-ungroup-zone"
+           ondragover="ungroupZoneDragOver(event)"
+           ondragleave="ungroupZoneDragLeave(event)"
+           ondrop="ungroupZoneDrop(event)">
+        ↑ Drop here to remove from folder
+      </div>
       <div class="nav-item" onclick="openAddProject()" style="color:var(--text3);border:1px dashed var(--border);margin-top:4px;">
         <span class="icon">+</span>New Project
       </div>
@@ -861,11 +870,13 @@ function folderDragStart(e,folderId){
   e.dataTransfer.setData('text/plain','folder:'+folderId);
   const el=document.querySelector(`[data-folder="${CSS.escape(folderId)}"]`);
   if(el)el.closest('.sidebar-folder').classList.add('dragging-folder');
+  document.getElementById('sidebar-ungroup-zone')?.classList.add('drag-active');
 }
 function folderDragEnd(e){
   draggedFolder=null;
   document.querySelectorAll('.dragging-folder').forEach(x=>x.classList.remove('dragging-folder'));
   document.querySelectorAll('.drag-target').forEach(x=>x.classList.remove('drag-target'));
+  document.getElementById('sidebar-ungroup-zone')?.classList.remove('drag-active','drag-over-zone');
 }
 function attachProjDrag(el){
   el.addEventListener('dragstart',e=>{
@@ -873,11 +884,13 @@ function attachProjDrag(el){
     el.classList.add('dragging');
     e.dataTransfer.effectAllowed='move';
     e.dataTransfer.setData('text/plain',draggedProj);
+    document.getElementById('sidebar-ungroup-zone')?.classList.add('drag-active');
   });
   el.addEventListener('dragend',()=>{
     el.classList.remove('dragging');
     document.querySelectorAll('.drag-over-above,.drag-over-below').forEach(x=>x.classList.remove('drag-over-above','drag-over-below'));
     draggedProj=null;
+    document.getElementById('sidebar-ungroup-zone')?.classList.remove('drag-active','drag-over-zone');
   });
   el.addEventListener('dragover',e=>{
     e.preventDefault();e.stopPropagation();
@@ -939,6 +952,28 @@ function sidebarFolderDrop(e,targetFolder){
       const f=folders.find(x=>x.id===draggedFolder);
       if(f){f.parent=targetFolder;saveFolders(folders);renderSidebarProjects();renderProjects();showToast('◎','"'+draggedFolder+'" nested under "'+targetFolder+'"');}
     } else {showToast('⚠','Cannot nest a folder inside itself');}
+  }
+}
+// ── UNGROUP DROP ZONE ──
+function ungroupZoneDragOver(e){
+  e.preventDefault();
+  document.getElementById('sidebar-ungroup-zone')?.classList.add('drag-over-zone');
+}
+function ungroupZoneDragLeave(e){
+  document.getElementById('sidebar-ungroup-zone')?.classList.remove('drag-over-zone');
+}
+function ungroupZoneDrop(e){
+  e.preventDefault();
+  document.getElementById('sidebar-ungroup-zone')?.classList.remove('drag-active','drag-over-zone');
+  if(draggedProj){
+    const p=projects.find(x=>x.name===draggedProj);
+    if(p){p.folder='';saveProjects();renderSidebarProjects();renderProjects();showToast('◎','"'+draggedProj+'" removed from folder');}
+    draggedProj=null;
+  } else if(draggedFolder){
+    const folders=getAllFolders();
+    const f=folders.find(x=>x.id===draggedFolder);
+    if(f){f.parent=null;saveFolders(folders);renderSidebarProjects();renderProjects();showToast('◎','"'+draggedFolder+'" is now top-level');}
+    draggedFolder=null;
   }
 }
 // ── NEW FOLDER (sidebar) ──
