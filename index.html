@@ -645,16 +645,90 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 
 const PROJ_COLORS=['#7c6ef5','#34d399','#fbbf24','#fb7185','#38bdf8','#a78bfa','#e8923a','#f472b6','#22d3ee','#84cc16'];
 const priOrder={high:0,med:1,low:2};
-let sb=null,supabaseReady=false;
-async function initSupabase(){
-  try{sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);supabaseReady=true;setSyncStatus('syncing');await pullFromSupabase();setSyncStatus('synced');}
-  catch(e){console.warn('Supabase offline:',e);setSyncStatus('offline');}
+let sb=null,supabaseReady=false,saveTimer=null;
+
+// ── ROW MAPPERS ── (canonical, used by both push and pull)
+function fromRow_task(r){
+  return{id:r.id,name:r.name,project:r.project||'',priority:r.priority||'med',
+    status:r.status||'todo',due:r.due||'',desc:r.description||r.desc||'',
+    notes:r.notes||'',
+    taskUpdates:tryParse(r.task_updates,[]),
+    subtasks:tryParse(r.subtasks,[])};
 }
+function toRow_task(t){
+  return{id:t.id,name:t.name,project:t.project||'',priority:t.priority||'med',
+    status:t.status||'todo',due:t.due||null,description:t.desc||'',notes:t.notes||'',
+    task_updates:JSON.stringify(t.taskUpdates||[]),
+    subtasks:JSON.stringify(t.subtasks||[])};
+}
+function fromRow_tb(r){return{id:r.id,label:r.label,day:r.day,start:r.start,end:r.end,color:r.color,notes:r.notes||''};}
+function toRow_tb(b){return{id:b.id,label:b.label,day:b.day,start:b.start,end:b.end,color:b.color,notes:b.notes||''};}
+function fromRow_update(r){return{id:r.id,title:r.title,project:r.project||'',type:r.type||'note',details:r.details||'',time:r.time};}
+function toRow_update(u){return{id:u.id,title:u.title,project:u.project||'',type:u.type||'note',details:u.details||'',time:u.time};}
+function fromRow_project(r){return{name:r.name,color:r.color||'#7c6ef5',icon:r.icon||'◆',desc:r.description||'',folder:r.folder||''};}
+function toRow_project(p,i){return{name:p.name,color:p.color||'#7c6ef5',icon:p.icon||'◆',description:p.desc||'',folder:p.folder||'',sort_order:i};}
+function tryParse(val,fallback){if(!val)return fallback;if(typeof val==='object')return val;try{return JSON.parse(val);}catch{return fallback;}}
+
+// ── LOCAL STATE (starts empty, Supabase fills it on boot) ──
+let tasks=[];
+let timeBlocks=[];
+let updates=[];
+let projects=[];
+let currentTheme=localStorage.getItem('cc_theme')||'dark';
+const uid=()=>Math.random().toString(36).slice(2,10);
+const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const DFULL=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MONS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const now=new Date();
+function todayStr(o=0){const d=new Date(now);d.setDate(d.getDate()+o);return d.toISOString().split('T')[0];}
+
+const DEFAULT_PROJECTS=[];
+const getProj=(name)=>projects.find(p=>p.name===name)||{name,color:'#888',icon:'◆',desc:''};
+const projColor=()=>Object.fromEntries(projects.map(p=>[p.name,p.color]));
+
+// ── SAVE: write to localStorage then push to Supabase ──
+const save=()=>{
+  localStorage.setItem('cc_tasks',JSON.stringify(tasks));
+  localStorage.setItem('cc_tb',JSON.stringify(timeBlocks));
+  localStorage.setItem('cc_updates',JSON.stringify(updates));
+  schedulePush();
+};
+const saveProjects=()=>{
+  localStorage.setItem('cc_projects',JSON.stringify(projects));
+  schedulePush();
+};
+function saveFoldersAndPush(folders){
+  localStorage.setItem('cc_folders',JSON.stringify(folders));
+  schedulePush();
+}
+function schedulePush(){clearTimeout(saveTimer);saveTimer=setTimeout(pushToSupabase,800);}
+
+// ── SUPABASE INIT ──
 function setSyncStatus(s){
   const el=document.getElementById('sync-status');
   const st={syncing:{t:'⟳ Syncing…',c:'var(--amber)'},synced:{t:'✦ Synced',c:'var(--green)'},offline:{t:'◌ Offline',c:'var(--text3)'},saving:{t:'⟳ Saving…',c:'var(--accent)'}};
   const v=st[s]||st.offline;if(el){el.textContent=v.t;el.style.color=v.c;}
 }
+async function initSupabase(){
+  try{
+    sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+    supabaseReady=true;
+    setSyncStatus('syncing');
+    await pullFromSupabase();
+    setSyncStatus('synced');
+  }catch(e){
+    console.warn('Supabase init failed:',e);
+    setSyncStatus('offline');
+    // Fall back to localStorage
+    tasks=JSON.parse(localStorage.getItem('cc_tasks')||'[]');
+    timeBlocks=JSON.parse(localStorage.getItem('cc_tb')||'[]');
+    updates=JSON.parse(localStorage.getItem('cc_updates')||'[]');
+    projects=JSON.parse(localStorage.getItem('cc_projects')||'null')||[];
+    runMigration();render();
+  }
+}
+
+// ── PULL: Supabase is source of truth ──
 async function pullFromSupabase(){
   if(!supabaseReady)return;
   const[t,tb,u,pr]=await Promise.all([
@@ -663,73 +737,76 @@ async function pullFromSupabase(){
     sb.from('updates').select('*').order('time',{ascending:false}),
     sb.from('projects').select('*').order('sort_order',{ascending:true}),
   ]);
-  if(t.data&&t.data.length){tasks=t.data.map(fromRow_task);localStorage.setItem('cc_tasks',JSON.stringify(tasks));}
-  if(tb.data&&tb.data.length){timeBlocks=tb.data.map(fromRow_tb);localStorage.setItem('cc_tb',JSON.stringify(timeBlocks));}
-  if(u.data&&u.data.length){updates=u.data.map(fromRow_update);localStorage.setItem('cc_updates',JSON.stringify(updates));}
-  if(pr.data&&pr.data.length){projects=pr.data.map(fromRow_project);localStorage.setItem('cc_projects',JSON.stringify(projects));}
-  runMigration();render();
+  if(t.error){console.warn('tasks pull error:',t.error);}
+  else{
+    tasks=t.data.map(fromRow_task);
+    localStorage.setItem('cc_tasks',JSON.stringify(tasks));
+  }
+  if(tb.error){console.warn('time_blocks pull error:',tb.error);}
+  else{
+    timeBlocks=tb.data.map(fromRow_tb);
+    localStorage.setItem('cc_tb',JSON.stringify(timeBlocks));
+  }
+  if(u.error){console.warn('updates pull error:',u.error);}
+  else{
+    updates=u.data.map(fromRow_update);
+    localStorage.setItem('cc_updates',JSON.stringify(updates));
+  }
+  if(pr.error){console.warn('projects pull error:',pr.error);}
+  else{
+    // Folder structure stored as sentinel row: name='__cc_folders__'
+    const sentinel=pr.data.find(r=>r.name==='__cc_folders__');
+    if(sentinel&&sentinel.description){
+      try{
+        const folders=JSON.parse(sentinel.description);
+        localStorage.setItem('cc_folders',JSON.stringify(folders));
+      }catch(e){console.warn('folder parse error:',e);}
+    }
+    const realProjects=pr.data.filter(r=>r.name!=='__cc_folders__');
+    projects=realProjects.map(fromRow_project);
+    localStorage.setItem('cc_projects',JSON.stringify(projects));
+  }
+  runMigration();
+  render();
 }
-function fromRow_task(r){return{id:r.id,name:r.name,project:r.project,priority:r.priority,status:r.status,due:r.due||'',desc:r.desc||'',notes:r.notes||'',taskUpdates:r.task_updates?JSON.parse(r.task_updates):[],subtasks:r.subtasks?JSON.parse(r.subtasks):[]};}
-function toRow_task(t){return{id:t.id,name:t.name,project:t.project,priority:t.priority,status:t.status,due:t.due||null,desc:t.desc||'',notes:t.notes||'',task_updates:JSON.stringify(t.taskUpdates||[]),subtasks:JSON.stringify(t.subtasks||[])};}
-function fromRow_tb(r){return{id:r.id,label:r.label,day:r.day,start:r.start,end:r.end,color:r.color,notes:r.notes||''};}
-function toRow_tb(b){return{id:b.id,label:b.label,day:b.day,start:b.start,end:b.end,color:b.color,notes:b.notes||''};}
-function fromRow_update(r){return{id:r.id,title:r.title,project:r.project,type:r.type,details:r.details||'',time:r.time};}
-function toRow_update(u){return{id:u.id,title:u.title,project:u.project,type:u.type,details:u.details||'',time:u.time};}
-function fromRow_project(r){return{name:r.name,color:r.color||'#7c6ef5',icon:r.icon||'◆',desc:r.description||'',folder:r.folder||''};}
-function toRow_project(p,i){return{name:p.name,color:p.color,icon:p.icon,description:p.desc||'',folder:p.folder||'',sort_order:i};}
-let saveTimer=null;
-const save=()=>{
-  localStorage.setItem('cc_tasks',JSON.stringify(tasks));localStorage.setItem('cc_tb',JSON.stringify(timeBlocks));localStorage.setItem('cc_updates',JSON.stringify(updates));
-  clearTimeout(saveTimer);saveTimer=setTimeout(pushToSupabase,600);
-};
+
+// ── PUSH: write everything to Supabase ──
 async function pushToSupabase(){
-  if(!supabaseReady)return;setSyncStatus('saving');
+  if(!supabaseReady)return;
+  setSyncStatus('saving');
   try{
-    await Promise.all([
+    // Pack folder structure into sentinel row so it syncs across devices
+    const folders=JSON.parse(localStorage.getItem('cc_folders')||'[]');
+    const sentinelRow={name:'__cc_folders__',color:'#000',icon:'_',
+      description:JSON.stringify(folders),folder:'',sort_order:9999};
+    const projRows=[...projects.map((p,i)=>toRow_project(p,i)),sentinelRow];
+    const results=await Promise.all([
       sb.from('tasks').upsert(tasks.map(toRow_task),{onConflict:'id'}),
       sb.from('time_blocks').upsert(timeBlocks.map(toRow_tb),{onConflict:'id'}),
       sb.from('updates').upsert(updates.map(toRow_update),{onConflict:'id'}),
-      sb.from('projects').upsert(projects.map((p,i)=>toRow_project(p,i)),{onConflict:'name'}),
+      sb.from('projects').upsert(projRows,{onConflict:'name'}),
     ]);
-    setSyncStatus('synced');
+    const errs=results.filter(r=>r.error);
+    if(errs.length){console.warn('Push errors:',errs.map(r=>r.error));setSyncStatus('offline');}
+    else{setSyncStatus('synced');}
   }catch(e){console.warn('Push failed:',e);setSyncStatus('offline');}
 }
-async function deleteFromSupabase(table,id){if(supabaseReady)await sb.from(table).delete().eq('id',id);}
 
-let tasks=JSON.parse(localStorage.getItem('cc_tasks')||'[]');
-let timeBlocks=JSON.parse(localStorage.getItem('cc_tb')||'[]');
-let updates=JSON.parse(localStorage.getItem('cc_updates')||'[]');
-let currentTheme=localStorage.getItem('cc_theme')||'dark';
-
-const DEFAULT_PROJECTS=[];
-
-// ── CLEAR ALL DATA ON FIRST RUN ──
-(function(){
-  const VERSION='v4-clean';
-  if(localStorage.getItem('cc_version')!==VERSION){
-    ['cc_tasks','cc_tb','cc_updates','cc_projects','cc_folders','cc_folder_states'].forEach(k=>localStorage.removeItem(k));
-    localStorage.setItem('cc_version',VERSION);
-  }
-})();
-
-let projects=JSON.parse(localStorage.getItem('cc_projects')||'null')||DEFAULT_PROJECTS;
-const saveProjects=()=>{localStorage.setItem('cc_projects',JSON.stringify(projects));clearTimeout(saveTimer);saveTimer=setTimeout(pushToSupabase,600);};
-const getProj=(name)=>projects.find(p=>p.name===name)||{name,color:'#888',icon:'◆',desc:''};
-const projColor=()=>Object.fromEntries(projects.map(p=>[p.name,p.color]));
-
-const uid=()=>Math.random().toString(36).slice(2,10);
-const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-const DFULL=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-const MONS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const now=new Date();
-function todayStr(o=0){const d=new Date(now);d.setDate(d.getDate()+o);return d.toISOString().split('T')[0];}
-
-function runMigration(){
-  const mt=new Date().toISOString();
-  tasks.forEach(t=>{if(t.taskUpdates?.length)t.taskUpdates=t.taskUpdates.map(u=>typeof u==='string'?{text:u,time:mt}:(u.time==null?{...u,time:mt}:u));});
+async function deleteFromSupabase(table,id){
+  if(supabaseReady)await sb.from(table).delete().eq('id',id);
 }
 
-runMigration();save();
+// ── MIGRATION: fix data shape issues from old versions ──
+function runMigration(){
+  const mt=new Date().toISOString();
+  tasks.forEach(t=>{
+    if(!t.taskUpdates)t.taskUpdates=[];
+    if(!t.subtasks)t.subtasks=[];
+    t.taskUpdates=t.taskUpdates.map(u=>typeof u==='string'?{text:u,time:mt}:(u.time==null?{...u,time:mt}:u));
+  });
+}
+
+runMigration();
 initSupabase();
 
 let _quickProjColor=null;
@@ -1473,7 +1550,7 @@ function getAllFolders(){
   return stored; // [{id,parent}]
 }
 function getFolderNames(){return getAllFolders().map(f=>f.id);}
-function saveFolders(folders){localStorage.setItem('cc_folders',JSON.stringify(folders));}
+function saveFolders(folders){saveFoldersAndPush(folders);}
 function addFolder(name,parent=null){
   const folders=getAllFolders();
   if(folders.find(f=>f.id===name)){showToast('⚠','Folder already exists');return false;}
