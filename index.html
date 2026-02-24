@@ -338,9 +338,9 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
                 <span class="panel-title">✦ Priority Queue</span>
                 <span class="panel-badge" id="today-count">0 tasks</span>
                 <div style="display:flex;gap:3px;margin-left:auto;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:2px;">
-                  <div class="grp-btn active" id="dash-grp-status" onclick="setDashGroupBy('status',this)">Status</div>
-                  <div class="grp-btn" id="dash-grp-project" onclick="setDashGroupBy('project',this)">Project</div>
-                  <div class="grp-btn" id="dash-grp-folder" onclick="setDashGroupBy('folder',this)">Folder</div>
+                  <div class="grp-btn active" id="dash-grp-status" onclick="setDashGroupBy('status')">Status</div>
+                  <div class="grp-btn" id="dash-grp-project" onclick="setDashGroupBy('project')">Project</div>
+                  <div class="grp-btn" id="dash-grp-folder" onclick="setDashGroupBy('folder')">Folder</div>
                 </div>
               </div>
               <div id="dashboard-tasks"></div>
@@ -365,9 +365,9 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
           <div style="display:flex;gap:10px;margin-bottom:14px;align-items:center;flex-wrap:wrap;">
             <input class="field-input" id="task-search-input" placeholder="Search tasks…" oninput="searchTasks(this.value)" style="max-width:240px;">
             <div style="display:flex;gap:4px;margin-left:auto;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:3px;">
-              <div id="grp-status" class="grp-btn" onclick="setGroupBy('status',this)">Status</div>
-              <div id="grp-project" class="grp-btn active" onclick="setGroupBy('project',this)">Project</div>
-              <div id="grp-folder" class="grp-btn" onclick="setGroupBy('folder',this)">Folder</div>
+              <div id="grp-status" class="grp-btn" onclick="setGroupBy('status')">Status</div>
+              <div id="grp-project" class="grp-btn active" onclick="setGroupBy('project')">Project</div>
+              <div id="grp-folder" class="grp-btn" onclick="setGroupBy('folder')">Folder</div>
             </div>
           </div>
           <div class="tabs" id="task-filter-tabs">
@@ -1470,29 +1470,18 @@ function renderGroupedByFolder(list){
   }
   return html||'<div class="empty-block">No tasks found.</div>';
 }
-function setGroupBy(g,el){
+function setGroupBy(g){
   taskGroupBy=g;
-  // sync dashboard group-by buttons too
+  // Update all group-by buttons by explicit ID — no selector fighting
   ['status','project','folder'].forEach(k=>{
-    const db=document.getElementById('dash-grp-'+k);
-    if(db)db.classList.toggle('active',k===g);
+    ['grp-','dash-grp-'].forEach(prefix=>{
+      const b=document.getElementById(prefix+k);
+      if(b)b.classList.toggle('active',k===g);
+    });
   });
-  document.querySelectorAll('#tab-tasks .grp-btn').forEach(b=>b.classList.remove('active'));
-  el.classList.add('active');
   renderAllTasks();renderDashTasks();
 }
-function setDashGroupBy(g,el){
-  taskGroupBy=g;
-  // sync all-tasks group-by buttons too
-  ['status','project','folder'].forEach(k=>{
-    const tb=document.getElementById('grp-'+k);
-    if(tb)tb.classList.toggle('active',k===g);
-  });
-  document.querySelectorAll('#tab-tasks .grp-btn').forEach(b=>b.classList.toggle('active',b.id==='grp-'+g));
-  el.closest('div').querySelectorAll('.grp-btn').forEach(b=>b.classList.remove('active'));
-  el.classList.add('active');
-  renderDashTasks();renderAllTasks();
-}
+function setDashGroupBy(g){setGroupBy(g);}
 function filterTasks(f,el){taskFilter=f;document.querySelectorAll('#task-filter-tabs .tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderAllTasks();}
 function searchTasks(v){taskSearch=v;renderAllTasks();}
 
