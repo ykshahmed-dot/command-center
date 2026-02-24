@@ -455,10 +455,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <div class="drawer-row">
         <div>
           <div class="drawer-label" style="font-size:8px;">Day</div>
-          <select class="drawer-select" id="drawer-tb-day">
-            <option value="Mon">Mon</option><option value="Tue">Tue</option><option value="Wed">Wed</option>
-            <option value="Thu">Thu</option><option value="Fri">Fri</option><option value="Sat">Sat</option><option value="Sun">Sun</option>
-          </select>
+          <input type="date" class="drawer-input" id="drawer-tb-day">
         </div>
         <div>
           <div class="drawer-label" style="font-size:8px;">Category</div>
@@ -529,7 +526,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <div class="modal-body">
       <div><div class="field-label">Label *</div><input class="field-input" id="tb-label" placeholder="e.g. Deep Work — Clinisynq"></div>
       <div class="field-row">
-        <div><div class="field-label">Day</div><select class="field-select" id="tb-day"><option value="Mon">Monday</option><option value="Tue">Tuesday</option><option value="Wed">Wednesday</option><option value="Thu">Thursday</option><option value="Fri">Friday</option><option value="Sat">Saturday</option><option value="Sun">Sunday</option></select></div>
+        <div><div class="field-label">Date</div><input class="field-input" type="date" id="tb-day"></div>
         <div><div class="field-label">Category</div><select class="field-select" id="tb-color"><option value="tb-purple">Focus / Deep Work</option><option value="tb-green">Research</option><option value="tb-amber">Admin / Meetings</option><option value="tb-sky">Medical School</option><option value="tb-rose">Urgent</option></select></div>
       </div>
       <div class="field-row">
@@ -549,7 +546,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <div class="modal-body">
       <div><div class="field-label">Label *</div><input class="field-input" id="edit-tb-label"></div>
       <div class="field-row">
-        <div><div class="field-label">Day</div><select class="field-select" id="edit-tb-day"><option value="Mon">Monday</option><option value="Tue">Tuesday</option><option value="Wed">Wednesday</option><option value="Thu">Thursday</option><option value="Fri">Friday</option><option value="Sat">Saturday</option><option value="Sun">Sunday</option></select></div>
+        <div><div class="field-label">Date</div><input class="field-input" type="date" id="edit-tb-day"></div>
         <div><div class="field-label">Category</div><select class="field-select" id="edit-tb-color"><option value="tb-purple">Focus / Deep Work</option><option value="tb-green">Research</option><option value="tb-amber">Admin / Meetings</option><option value="tb-sky">Medical School</option><option value="tb-rose">Urgent</option></select></div>
       </div>
       <div class="field-row">
@@ -804,6 +801,22 @@ function runMigration(){
     if(!t.subtasks)t.subtasks=[];
     t.taskUpdates=t.taskUpdates.map(u=>typeof u==='string'?{text:u,time:mt}:(u.time==null?{...u,time:mt}:u));
   });
+  // Migrate time blocks from day-names to ISO dates
+  const dayNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  let migrated=false;
+  timeBlocks.forEach(b=>{
+    if(b.day&&dayNames.includes(b.day)){
+      // Map to the most recent past occurrence (or today) of that weekday
+      const target=dayNames.indexOf(b.day);
+      const d=new Date(now);
+      let offset=d.getDay()-target;
+      if(offset<0)offset+=7;
+      d.setDate(d.getDate()-offset);
+      b.day=d.toISOString().split('T')[0];
+      migrated=true;
+    }
+  });
+  if(migrated){save();pushToSupabase();}
 }
 
 runMigration();
@@ -1096,7 +1109,7 @@ document.getElementById('sidebar-date').textContent=`${DFULL[now.getDay()]}, ${M
 document.getElementById('today-day-badge').textContent=DAYS[now.getDay()];
 
 let currentTab='dashboard',taskFilter='all',taskSearch='',weekOffset=0,drawerTaskId=null,projectFilter=null;
-let activeDay=DAYS[now.getDay()===0?1:now.getDay()];
+let activeDay=now.toISOString().split('T')[0]; // ISO date of today
 
 function switchTab(tab,el){
   document.querySelectorAll('.tab-view').forEach(v=>v.classList.remove('active'));
@@ -1302,12 +1315,12 @@ function taskRow(t){
 }
 
 function renderDashTasks(){
-  const list=[...tasks].filter(t=>t.status!=='done').sort((a,b)=>priOrder[a.priority]-priOrder[b.priority]).slice(0,8);
+  const list=[...tasks].filter(t=>t.status!=='done').sort((a,b)=>priOrder[a.priority]-priOrder[b.priority]);
   document.getElementById('today-count').textContent=list.length+' tasks';
   document.getElementById('dashboard-tasks').innerHTML=list.length?list.map(taskRow).join(''):'<div class="empty-block">All clear! Add a task to get started.</div>';
 }
 function renderDashTimeBlocks(){
-  const key=DAYS[now.getDay()],blocks=timeBlocks.filter(b=>b.day===key).sort((a,b)=>a.start.localeCompare(b.start));
+  const key=now.toISOString().split('T')[0],blocks=timeBlocks.filter(b=>b.day===key).sort((a,b)=>a.start.localeCompare(b.start));
   document.getElementById('dashboard-timeblocks').innerHTML=blocks.length?blocks.map(b=>tbRow(b,false)).join(''):`<div class="empty-block">No blocks today. <span style="color:var(--accent);cursor:pointer" onclick="openTimeBlockModal()">Add one →</span></div>`;
 }
 function renderDashUpdates(){
@@ -1377,25 +1390,29 @@ function getWeekDates(){
   base.setDate(base.getDate()+diff+weekOffset*7);
   return Array.from({length:7},(_,i)=>{const x=new Date(base);x.setDate(base.getDate()+i);return x;});
 }
+function isoDate(d){return d.toISOString().split('T')[0];}
+function fmtDayLabel(iso){const d=new Date(iso+'T12:00:00');return DAYS[d.getDay()];}
+function fmtDayNum(iso){return new Date(iso+'T12:00:00').getDate();}
 function renderWeekDayTabs(){
-  const dates=getWeekDates(),todayISO=now.toISOString().split('T')[0];
-  const lbl=weekOffset===0?'This Week':weekOffset===1?'Next Week':weekOffset===-1?'Last Week':`Week ${weekOffset>0?'+':''}${weekOffset}`;
+  const dates=getWeekDates(),todayISO=isoDate(now);
+  const lbl=weekOffset===0?'This Week':weekOffset===1?'Next Week':weekOffset===-1?'Last Week':`Week of ${dates[0].getDate()} ${MONS[dates[0].getMonth()]}`;
   document.getElementById('week-label').textContent=lbl;
   document.getElementById('day-tabs').innerHTML=dates.map(d=>{
-    const key=DAYS[d.getDay()],iso=d.toISOString().split('T')[0];
-    const isActive=key===activeDay,hasBlocks=timeBlocks.some(b=>b.day===key);
-    return `<div class="day-tab ${isActive?'active':''} ${hasBlocks?'has-blocks':''}" onclick="selectDay('${key}')">
-      <div class="day-tab-name">${key}${iso===todayISO?' ●':''}</div>
+    const iso=isoDate(d),dayName=DAYS[d.getDay()];
+    const isActive=iso===activeDay,hasBlocks=timeBlocks.some(b=>b.day===iso);
+    return `<div class="day-tab ${isActive?'active':''} ${hasBlocks?'has-blocks':''}" onclick="selectDay('${iso}')">
+      <div class="day-tab-name">${dayName}${iso===todayISO?' ●':''}</div>
       <div class="day-tab-date">${d.getDate()}</div>
       <div class="day-tab-dot"></div>
     </div>`;
   }).join('');
 }
-function selectDay(key){activeDay=key;renderWeekDayTabs();renderTimeBlocks();}
+function selectDay(iso){activeDay=iso;renderWeekDayTabs();renderTimeBlocks();}
 function changeWeek(d){weekOffset+=d;renderWeekDayTabs();renderTimeBlocks();}
 function renderTimeBlocks(){
   const blocks=timeBlocks.filter(b=>b.day===activeDay).sort((a,b)=>a.start.localeCompare(b.start));
-  document.getElementById('timeblocks-list').innerHTML=blocks.length?blocks.map(b=>tbRow(b,true)).join(''):`<div class="empty-block">No blocks for ${activeDay}.</div>`;
+  const label=activeDay?`${DAYS[new Date(activeDay+'T12:00:00').getDay()]} ${new Date(activeDay+'T12:00:00').getDate()}`:'';
+  document.getElementById('timeblocks-list').innerHTML=blocks.length?blocks.map(b=>tbRow(b,true)).join(''):`<div class="empty-block">No blocks for ${label}. <span style="color:var(--accent);cursor:pointer;" onclick="openTimeBlockModal()">Add one →</span></div>`;
 }
 
 function renderSuggestions(){
@@ -1415,7 +1432,17 @@ function renderSuggestions(){
     }
     return{...t,score,reasons:reasons.slice(0,2)};
   }).sort((a,b)=>b.score-a.score).slice(0,6);
-  const sugDays=()=>{const cands=[];for(let i=1;i<=7;i++){const k=DAYS[(now.getDay()+i)%7];if(k==='Sat'||k==='Sun')continue;cands.push({key:k,n:timeBlocks.filter(b=>b.day===k).length});}return cands.sort((a,b)=>a.n-b.n).slice(0,3).map(c=>c.key);};
+  const sugDays=()=>{
+    const cands=[];
+    for(let i=1;i<=7;i++){
+      const d=new Date(now);d.setDate(now.getDate()+i);
+      const dayOfWeek=d.getDay();
+      if(dayOfWeek===0||dayOfWeek===6)continue;
+      const iso=d.toISOString().split('T')[0];
+      cands.push({iso,name:DAYS[dayOfWeek],n:timeBlocks.filter(b=>b.day===iso).length});
+    }
+    return cands.sort((a,b)=>a.n-b.n).slice(0,3);
+  };
   el.innerHTML=scored.map(t=>{
     const top=t.reasons[0],c=pc[t.project]||'#888',days=sugDays();
     return `<div class="sug-card" onclick="openDrawer('${t.id}')" style="--sug-c:${c}">
@@ -1424,20 +1451,29 @@ function renderSuggestions(){
         <div class="sug-reason" style="color:${top?.color||'var(--text3)'};">${top?.icon||''} ${top?.text||'Needs attention'}</div>
         <div class="sug-name">${t.name}</div>
         <div class="sug-meta"><span class="tag ${priClass[t.priority]}">${t.priority}</span><span class="proj-tag" style="background:${c}22;color:${c}">${t.project}</span></div>
-        <div class="sug-days">Schedule: ${days.map(d=>`<span onclick="event.stopPropagation();quickSchedule('${t.id}','${d}')">${d}</span>`).join(' · ')}</div>
+        <div class="sug-days">Schedule: ${days.map(d=>`<span onclick="event.stopPropagation();quickSchedule('${t.id}','${d.name}')">${d.name}</span>`).join(' · ')}</div>
       </div>
       <div class="sug-action" onclick="event.stopPropagation();openDrawer('${t.id}')">Open →</div>
     </div>`;
   }).join('');
 }
-function quickSchedule(taskId,day){
+function nextISOForDayName(dayName){
+  // Returns the ISO date of the next occurrence of a day name like 'Mon','Tue' from today
+  const target=DAYS.indexOf(dayName);
+  const d=new Date(now);
+  let i=1;
+  while(i<=7){d.setDate(now.getDate()+i);if(d.getDay()===target)return d.toISOString().split('T')[0];i++;}
+  return d.toISOString().split('T')[0];
+}
+function quickSchedule(taskId,dayName){
   const t=tasks.find(x=>x.id===taskId);if(!t)return;
-  const dayBlocks=timeBlocks.filter(b=>b.day===day).sort((a,b)=>a.start.localeCompare(b.start));
+  const iso=nextISOForDayName(dayName);
+  const dayBlocks=timeBlocks.filter(b=>b.day===iso).sort((a,b)=>a.start.localeCompare(b.start));
   let startH=8;if(dayBlocks.length){const[h]=dayBlocks[dayBlocks.length-1].end.split(':').map(Number);startH=h;}
   if(startH<8)startH=8;if(startH>=18)startH=8;
   const s=String(startH).padStart(2,'0')+':00',e=String(Math.min(startH+2,20)).padStart(2,'0')+':00';
-  timeBlocks.push({id:uid(),label:t.name,day,start:s,end:e,color:'tb-purple',notes:''});
-  activeDay=day;save();switchTab('timeblock',document.querySelectorAll('.nav-item')[2]);showToast('◷',`Scheduled for ${day} at ${s}`);
+  timeBlocks.push({id:uid(),label:t.name,day:iso,start:s,end:e,color:'tb-purple',notes:''});
+  activeDay=iso;save();switchTab('timeblock',document.querySelectorAll('.nav-item')[2]);showToast('◷',`Scheduled for ${dayName} at ${s}`);
 }
 
 function renderProjects(){
@@ -1650,7 +1686,7 @@ function openDrawer(id){
   document.getElementById('drawer-due-input').value=t.due||'';
   document.getElementById('drawer-due-clear').style.opacity=t.due?'1':'0.3';
   document.getElementById('drawer-notes').value=t.notes||'';
-  document.getElementById('drawer-tb-day').value=DAYS[(now.getDay()+1)%7];
+  {const tomorrow=new Date(now);tomorrow.setDate(tomorrow.getDate()+1);document.getElementById('drawer-tb-day').value=tomorrow.toISOString().split('T')[0];}
   const statuses=[['todo','To Do','status-todo'],['inprog','In Progress','status-inprog'],['done','Done','status-done'],['blocked','Blocked','status-blocked']];
   document.getElementById('drawer-status').innerHTML=statuses.map(([v,l,c])=>`<span class="status-pill ${c} ${t.status===v?'sel':''}" onclick="setTaskStatus('${id}','${v}')">${l}</span>`).join('');
   renderSubtasks(t);
@@ -1710,7 +1746,8 @@ function createBlockFromDrawer(){
   const t=tasks.find(x=>x.id===drawerTaskId);if(!t)return;
   const day=document.getElementById('drawer-tb-day').value;
   const nb={id:uid(),label:t.name,day,start:document.getElementById('drawer-tb-start').value,end:document.getElementById('drawer-tb-end').value,color:document.getElementById('drawer-tb-color').value,notes:''};
-  timeBlocks.push(nb);activeDay=day;save();closeDrawer();switchTab('timeblock',document.querySelectorAll('.nav-item')[2]);showToast('◷',`Block added for ${day}`);
+  if(!day){showToast('⚠','Please select a date');return;}
+  timeBlocks.push(nb);activeDay=day;save();closeDrawer();switchTab('timeblock',document.querySelectorAll('.nav-item')[2]);showToast('◷','Block added');
 }
 function toggleTask(id){
   const t=tasks.find(x=>x.id===id);if(!t)return;
@@ -1724,7 +1761,7 @@ let editingBlockId=null;
 function openEditBlock(id){
   const b=timeBlocks.find(x=>x.id===id);if(!b)return;
   editingBlockId=id;
-  document.getElementById('edit-tb-label').value=b.label;document.getElementById('edit-tb-day').value=b.day;
+  document.getElementById('edit-tb-label').value=b.label;document.getElementById('edit-tb-day').value=b.day||'';
   document.getElementById('edit-tb-color').value=b.color;document.getElementById('edit-tb-start').value=b.start;
   document.getElementById('edit-tb-end').value=b.end;document.getElementById('edit-tb-notes').value=b.notes||'';
   const linked=tasks.find(t=>b.label.toLowerCase().includes(t.name.toLowerCase().slice(0,20)));
@@ -1737,7 +1774,7 @@ function openEditBlock(id){
 function saveEditBlock(){
   const b=timeBlocks.find(x=>x.id===editingBlockId);if(!b)return;
   const label=document.getElementById('edit-tb-label').value.trim();if(!label)return;
-  b.label=label;b.day=document.getElementById('edit-tb-day').value;b.color=document.getElementById('edit-tb-color').value;
+  b.label=label;b.day=document.getElementById('edit-tb-day').value||b.day;b.color=document.getElementById('edit-tb-color').value;
   b.start=document.getElementById('edit-tb-start').value;b.end=document.getElementById('edit-tb-end').value;b.notes=document.getElementById('edit-tb-notes').value;
   activeDay=b.day;save();closeModal('edit-tb-modal');render();showToast('◷','Block updated');
 }
@@ -1749,7 +1786,7 @@ function deleteTimeBlock(id){timeBlocks=timeBlocks.filter(b=>b.id!==id);save();d
 
 // MODALS
 function openAddTask(){populateProjectDropdowns();document.getElementById('add-task-modal').classList.add('open');setTimeout(()=>document.getElementById('new-task-name').focus(),80);}
-function openTimeBlockModal(){document.getElementById('tb-day').value=activeDay;document.getElementById('add-tb-modal').classList.add('open');setTimeout(()=>document.getElementById('tb-label').focus(),80);}
+function openTimeBlockModal(){document.getElementById('tb-day').value=activeDay||now.toISOString().split('T')[0];document.getElementById('add-tb-modal').classList.add('open');setTimeout(()=>document.getElementById('tb-label').focus(),80);}
 function openAddUpdate(){populateProjectDropdowns();document.getElementById('add-update-modal').classList.add('open');setTimeout(()=>document.getElementById('upd-title').focus(),80);}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 // ── NOTIFICATIONS ──
@@ -1856,6 +1893,7 @@ function saveTask(){
 function saveTimeBlock(){
   const label=document.getElementById('tb-label').value.trim();if(!label)return;
   const nb={id:uid(),label,day:document.getElementById('tb-day').value,start:document.getElementById('tb-start').value,end:document.getElementById('tb-end').value,color:document.getElementById('tb-color').value,notes:document.getElementById('tb-notes').value};
+  if(!nb.day){showToast('⚠','Please select a date');return;}
   timeBlocks.push(nb);activeDay=nb.day;
   document.getElementById('tb-label').value='';document.getElementById('tb-notes').value='';
   closeModal('add-tb-modal');save();if(currentTab!=='timeblock')switchTab('timeblock',document.querySelectorAll('.nav-item')[2]);else render();
