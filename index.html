@@ -133,6 +133,14 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .day-tab{flex-shrink:0;padding:7px 12px;border-radius:9px;border:1.5px solid var(--border);background:var(--surface);cursor:pointer;text-align:center;min-width:52px;transition:all 0.15s;}
 .day-tab.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);}
 .day-tab-name{font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;}
+.grp-btn{padding:4px 10px;border-radius:6px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.5px;text-transform:uppercase;color:var(--text3);cursor:pointer;transition:all 0.15s;}
+.grp-btn.active{background:var(--accent);color:#fff;}
+.grp-btn:hover:not(.active){background:var(--border2);color:var(--text);}
+.task-group-header{padding:10px 17px 4px;display:flex;align-items:center;gap:7px;border-bottom:1px solid var(--border);background:var(--surface2);}
+.task-group-label{font-family:'DM Mono',monospace;font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);}
+.task-group-count{font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);margin-left:auto;}
+.task-folder-header{padding:8px 17px 4px;display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--border);background:var(--surface);}
+.task-folder-name{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);}
 .day-tab.active .day-tab-name{color:var(--accent);}
 .day-tab-date{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:var(--text);margin-top:2px;}
 .day-tab.active .day-tab-date{color:var(--accent);}
@@ -326,7 +334,15 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
           </div>
           <div class="grid-dash">
             <div class="panel">
-              <div class="panel-header"><span class="panel-title">✦ Priority Queue</span><span class="panel-badge" id="today-count">0 tasks</span></div>
+              <div class="panel-header" style="flex-wrap:wrap;gap:6px;">
+                <span class="panel-title">✦ Priority Queue</span>
+                <span class="panel-badge" id="today-count">0 tasks</span>
+                <div style="display:flex;gap:3px;margin-left:auto;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:2px;">
+                  <div class="grp-btn active" id="dash-grp-status" onclick="setDashGroupBy('status',this)">Status</div>
+                  <div class="grp-btn" id="dash-grp-project" onclick="setDashGroupBy('project',this)">Project</div>
+                  <div class="grp-btn" id="dash-grp-folder" onclick="setDashGroupBy('folder',this)">Folder</div>
+                </div>
+              </div>
               <div id="dashboard-tasks"></div>
             </div>
             <div>
@@ -346,8 +362,13 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         <div class="tab-view" id="tab-tasks">
           <div class="section-title">All Tasks</div>
           <div class="section-sub">Manage everything across all projects</div>
-          <div style="display:flex;gap:10px;margin-bottom:14px;align-items:center;">
-            <input class="field-input" id="task-search-input" placeholder="Search tasks…" oninput="searchTasks(this.value)" style="max-width:280px;">
+          <div style="display:flex;gap:10px;margin-bottom:14px;align-items:center;flex-wrap:wrap;">
+            <input class="field-input" id="task-search-input" placeholder="Search tasks…" oninput="searchTasks(this.value)" style="max-width:240px;">
+            <div style="display:flex;gap:4px;margin-left:auto;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:3px;">
+              <div id="grp-status" class="grp-btn" onclick="setGroupBy('status',this)">Status</div>
+              <div id="grp-project" class="grp-btn active" onclick="setGroupBy('project',this)">Project</div>
+              <div id="grp-folder" class="grp-btn" onclick="setGroupBy('folder',this)">Folder</div>
+            </div>
           </div>
           <div class="tabs" id="task-filter-tabs">
             <div class="tab active" onclick="filterTasks('all',this)">All</div>
@@ -1108,7 +1129,7 @@ document.getElementById('dash-sub').textContent=`${DFULL[now.getDay()]}, ${MONS[
 document.getElementById('sidebar-date').textContent=`${DFULL[now.getDay()]}, ${MONS[now.getMonth()]} ${now.getDate()}`;
 document.getElementById('today-day-badge').textContent=DAYS[now.getDay()];
 
-let currentTab='dashboard',taskFilter='all',taskSearch='',weekOffset=0,drawerTaskId=null,projectFilter=null;
+let currentTab='dashboard',taskFilter='all',taskSearch='',weekOffset=0,drawerTaskId=null,projectFilter=null,taskGroupBy='project';
 let activeDay=now.toISOString().split('T')[0]; // ISO date of today
 
 function switchTab(tab,el){
@@ -1317,7 +1338,14 @@ function taskRow(t){
 function renderDashTasks(){
   const list=[...tasks].filter(t=>t.status!=='done').sort((a,b)=>priOrder[a.priority]-priOrder[b.priority]);
   document.getElementById('today-count').textContent=list.length+' tasks';
-  document.getElementById('dashboard-tasks').innerHTML=list.length?list.map(taskRow).join(''):'<div class="empty-block">All clear! Add a task to get started.</div>';
+  if(!list.length){document.getElementById('dashboard-tasks').innerHTML='<div class="empty-block">All clear! Add a task to get started.</div>';return;}
+  if(taskGroupBy==='project'){
+    document.getElementById('dashboard-tasks').innerHTML=renderGroupedByProject(list);
+  } else if(taskGroupBy==='folder'){
+    document.getElementById('dashboard-tasks').innerHTML=renderGroupedByFolder(list);
+  } else {
+    document.getElementById('dashboard-tasks').innerHTML=list.map(taskRow).join('');
+  }
 }
 function renderDashTimeBlocks(){
   const key=now.toISOString().split('T')[0],blocks=timeBlocks.filter(b=>b.day===key).sort((a,b)=>a.start.localeCompare(b.start));
@@ -1331,13 +1359,20 @@ function renderAllTasks(){
   let list=[...tasks];
   if(projectFilter)list=list.filter(t=>t.project===projectFilter);
   if(taskSearch)list=list.filter(t=>t.name.toLowerCase().includes(taskSearch.toLowerCase()));
-  if(taskFilter!=='all'){
-    list=list.filter(t=>t.status===taskFilter);
-    list.sort((a,b)=>priOrder[a.priority]-priOrder[b.priority]);
-    document.getElementById('all-tasks-list').innerHTML=list.length?list.map(taskRow).join(''):'<div class="empty-block">No tasks found.</div>';
-    return;
+  if(taskFilter!=='all')list=list.filter(t=>t.status===taskFilter);
+
+  const el=document.getElementById('all-tasks-list');
+  if(!list.length){el.innerHTML='<div class="empty-block">No tasks found.</div>';return;}
+
+  if(taskGroupBy==='project'){
+    el.innerHTML=renderGroupedByProject(list);
+  } else if(taskGroupBy==='folder'){
+    el.innerHTML=renderGroupedByFolder(list);
+  } else {
+    el.innerHTML=renderGroupedByStatus(list);
   }
-  // Grouped by status
+}
+function renderGroupedByStatus(list){
   const groups=[
     {key:'inprog',label:'In Progress',icon:'●',color:'var(--accent)'},
     {key:'todo',label:'To Do',icon:'□',color:'var(--text2)'},
@@ -1348,14 +1383,115 @@ function renderAllTasks(){
   groups.forEach(g=>{
     const items=list.filter(t=>t.status===g.key).sort((a,b)=>priOrder[a.priority]-priOrder[b.priority]);
     if(!items.length)return;
-    html+=`<div style="padding:10px 17px 4px;display:flex;align-items:center;gap:7px;border-bottom:1px solid var(--border);background:var(--surface2);">
-      <span style="color:${g.color};font-size:11px;">${g.icon}</span>
-      <span style="font-family:'DM Mono',monospace;font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);">${g.label}</span>
-      <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);margin-left:auto;">${items.length}</span>
+    html+=`<div class="task-group-header"><span style="color:${g.color};font-size:11px;">${g.icon}</span><span class="task-group-label">${g.label}</span><span class="task-group-count">${items.length}</span></div>`;
+    html+=items.map(taskRow).join('');
+  });
+  return html||'<div class="empty-block">No tasks found.</div>';
+}
+function renderGroupedByProject(list){
+  const pc=projColor();
+  // Get unique projects in list, ordered by project definition order
+  const projNames=[...new Set(projects.map(p=>p.name))].filter(n=>list.some(t=>t.project===n));
+  const unassigned=list.filter(t=>!t.project||!projects.find(p=>p.name===t.project));
+  let html='';
+  projNames.forEach(name=>{
+    const items=list.filter(t=>t.project===name).sort((a,b)=>priOrder[a.priority]-priOrder[b.priority]);
+    if(!items.length)return;
+    const p=getProj(name);const c=p.color||'#888';
+    html+=`<div class="task-group-header" style="border-left:3px solid ${c};padding-left:14px;">
+      <span style="color:${c};font-size:13px;">${p.icon||'◆'}</span>
+      <span class="task-group-label" style="color:var(--text2);">${name}</span>
+      <span class="task-group-count">${items.length}</span>
     </div>`;
     html+=items.map(taskRow).join('');
   });
-  document.getElementById('all-tasks-list').innerHTML=html||'<div class="empty-block">No tasks found. Create one with ⊕ New Task.</div>';
+  if(unassigned.length){
+    html+=`<div class="task-group-header"><span class="task-group-label">No Project</span><span class="task-group-count">${unassigned.length}</span></div>`;
+    html+=unassigned.map(taskRow).join('');
+  }
+  return html||'<div class="empty-block">No tasks found.</div>';
+}
+function renderGroupedByFolder(list){
+  const folders=getAllFolders();
+  // Build folder tree: top-level folders, then their children
+  function renderFolderSection(parentId,depth){
+    let html='';
+    const childFolders=folders.filter(f=>f.parent===parentId);
+    childFolders.forEach(folder=>{
+      // Get all projects in this folder (including nested)
+      const folderProjs=projects.filter(p=>p.folder===folder.id);
+      const folderTasks=list.filter(t=>folderProjs.some(p=>p.name===t.project));
+      const indent=depth*12;
+      html+=`<div class="task-folder-header" style="padding-left:${17+indent}px;">
+        <span style="color:var(--text3);font-size:10px;">▾</span>
+        <span class="task-folder-name">${folder.id}</span>
+        <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);margin-left:auto;">${folderTasks.length}</span>
+      </div>`;
+      // Projects in this folder
+      folderProjs.forEach(proj=>{
+        const items=list.filter(t=>t.project===proj.name).sort((a,b)=>priOrder[a.priority]-priOrder[b.priority]);
+        if(!items.length)return;
+        const c=proj.color||'#888';
+        html+=`<div class="task-group-header" style="padding-left:${22+indent}px;border-left:3px solid ${c};">
+          <span style="color:${c};font-size:12px;">${proj.icon||'◆'}</span>
+          <span class="task-group-label" style="color:var(--text2);">${proj.name}</span>
+          <span class="task-group-count">${items.length}</span>
+        </div>`;
+        html+=items.map(taskRow).join('');
+      });
+      // Recurse into sub-folders
+      html+=renderFolderSection(folder.id,depth+1);
+    });
+    return html;
+  }
+  let html=renderFolderSection(null,0);
+  // Ungrouped projects (no folder)
+  const unfoldered=projects.filter(p=>!p.folder);
+  let ungroupedHtml='';
+  unfoldered.forEach(proj=>{
+    const items=list.filter(t=>t.project===proj.name).sort((a,b)=>priOrder[a.priority]-priOrder[b.priority]);
+    if(!items.length)return;
+    const c=proj.color||'#888';
+    ungroupedHtml+=`<div class="task-group-header" style="border-left:3px solid ${c};padding-left:14px;">
+      <span style="color:${c};font-size:12px;">${proj.icon||'◆'}</span>
+      <span class="task-group-label" style="color:var(--text2);">${proj.name}</span>
+      <span class="task-group-count">${items.length}</span>
+    </div>`;
+    ungroupedHtml+=items.map(taskRow).join('');
+  });
+  if(ungroupedHtml){
+    html+=`<div class="task-folder-header"><span class="task-folder-name">No Folder</span></div>`+ungroupedHtml;
+  }
+  // Tasks with no project at all
+  const noProj=list.filter(t=>!t.project||!projects.find(p=>p.name===t.project));
+  if(noProj.length){
+    html+=`<div class="task-folder-header"><span class="task-folder-name">No Project</span><span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);margin-left:auto;">${noProj.length}</span></div>`;
+    html+=noProj.map(taskRow).join('');
+  }
+  return html||'<div class="empty-block">No tasks found.</div>';
+}
+function setGroupBy(g,el){
+  taskGroupBy=g;
+  // sync dashboard group-by buttons too
+  ['status','project','folder'].forEach(k=>{
+    const db=document.getElementById('dash-grp-'+k);
+    if(db)db.classList.toggle('active',k===g);
+  });
+  document.querySelectorAll('#tab-tasks .grp-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderAllTasks();renderDashTasks();
+}
+function setDashGroupBy(g,el){
+  taskGroupBy=g;
+  // sync all-tasks group-by buttons too
+  ['status','project','folder'].forEach(k=>{
+    const tb=document.getElementById('grp-'+k);
+    if(tb)tb.classList.toggle('active',k===g);
+  });
+  document.querySelectorAll('#tab-tasks .grp-btn').forEach(b=>b.classList.toggle('active',b.id==='grp-'+g));
+  el.closest('div').querySelectorAll('.grp-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderDashTasks();renderAllTasks();
 }
 function filterTasks(f,el){taskFilter=f;document.querySelectorAll('#task-filter-tabs .tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderAllTasks();}
 function searchTasks(v){taskSearch=v;renderAllTasks();}
