@@ -1075,11 +1075,12 @@ async function initSupabase(){
 // ── PULL: Supabase is source of truth ──
 async function pullFromSupabase(){
   if(!supabaseReady)return;
-  const[t,tb,u,pr]=await Promise.all([
+  const[t,tb,u,pr,np]=await Promise.all([
     sb.from('tasks').select('*').order('created_at',{ascending:true}),
     sb.from('time_blocks').select('*').order('created_at',{ascending:true}),
     sb.from('updates').select('*').order('time',{ascending:false}),
     sb.from('projects').select('*').order('sort_order',{ascending:true}),
+    sb.from('notepad_notes').select('*').order('created_at',{ascending:false}),
   ]);
   if(t.error){console.warn('tasks pull error:',t.error);}
   else{
@@ -1090,6 +1091,19 @@ async function pullFromSupabase(){
   else{
     timeBlocks=tb.data.map(fromRow_tb);
     localStorage.setItem('cc_tb',JSON.stringify(timeBlocks));
+  }
+  if(np&&!np.error&&np.data){
+    const local=localStorage.getItem('np_notes_v2');
+    const localNotes=local?JSON.parse(local):[];
+    const remoteIds=new Set(np.data.map(r=>r.id));
+    const localOnly=localNotes.filter(n=>!remoteIds.has(n.id));
+    npNotes=[...np.data.map(r=>({id:r.id,text:r.text,tag:r.tag||'general',
+      priority:r.priority||'med',converted:r.converted||false,
+      createdAt:r.created_at,taskId:r.task_id||null})),...localOnly]
+      .sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+    localStorage.setItem('np_notes_v2',JSON.stringify(npNotes));
+  } else if(np&&np.error&&np.error.code==='42P01'){
+    console.warn('notepad_notes table not yet created in Supabase — notes stored locally only');
   }
   if(u.error){console.warn('updates pull error:',u.error);}
   else{
@@ -1124,11 +1138,18 @@ async function pushToSupabase(){
     const sentinelRow={name:'__cc_folders__',color:'#000',icon:'_',
       description:JSON.stringify(folders),folder:'',sort_order:9999};
     const projRows=[...projects.map((p,i)=>toRow_project(p,i)),sentinelRow];
+    // Notepad notes row converter
+    const npRows=npNotes.map(n=>({
+      id:n.id, text:n.text, tag:n.tag||'general',
+      priority:n.priority||'med', converted:n.converted||false,
+      created_at:n.createdAt, task_id:n.taskId||null
+    }));
     const results=await Promise.all([
       sb.from('tasks').upsert(tasks.map(toRow_task),{onConflict:'id'}),
       sb.from('time_blocks').upsert(timeBlocks.map(toRow_tb),{onConflict:'id'}),
       sb.from('updates').upsert(updates.map(toRow_update),{onConflict:'id'}),
       sb.from('projects').upsert(projRows,{onConflict:'name'}),
+      npRows.length ? sb.from('notepad_notes').upsert(npRows,{onConflict:'id'}) : Promise.resolve({error:null}),
     ]);
     const errs=results.filter(r=>r.error);
     if(errs.length){console.warn('Push errors:',errs.map(r=>r.error));setSyncStatus('offline');}
@@ -2382,62 +2403,157 @@ function openApp(app){
   const launcher=document.getElementById('launcher');
   if(app==='cc'){
     launcher.classList.add('hidden');
-    // show shell, already visible
   } else if(app==='np'){
     launcher.classList.add('hidden');
     const sa=document.getElementById('np-standalone');
     sa.style.display='flex';
-    npSaRender();
+    npRender();npSaRender();
   }
 }
 function goHome(){
   document.getElementById('np-standalone').style.display='none';
   document.getElementById('launcher').classList.remove('hidden');
-  document.getElementById('shell')?.setAttribute('style',''); // keep shell visible
 }
 
 // ════════════════════════════════════════════════
-//  NOTEPAD — integrated module
+//  NOTEPAD — bulletproof storage layer
 // ════════════════════════════════════════════════
-let npNotes=[];
-let npActiveTag='general';
-let npActivePri='med';
-let npActiveFilter='all';
-let npConvertingNote=null;
-let npSelProjName='';
-let npSelProjColor='';
-let npNewProjColor=PROJ_COLORS[0]||'#7b68ff';
+const NP_LS_KEY = 'np_notes_v2';
+let npNotes = [];
+let npActiveTag = 'general';
+let npActivePri = 'med';
+let npActiveFilter = 'all';
+let npConvertingNote = null;
+let npSelProjName = '';
+let npSelProjColor = '';
+let npNewProjColor = PROJ_COLORS[0] || '#7b68ff';
 
-// Standalone notepad state (mirrors in-app but uses separate form elements)
-let npSaActiveTag='general';
-let npSaActivePri='med';
-let npSaActiveFilter='all';
+// Standalone state
+let npSaActiveTag = 'general';
+let npSaActivePri = 'med';
+let npSaActiveFilter = 'all';
 
-// ── Load / Push notes ──
-async function npLoadNotes(){
-  try{
-    if(!supabaseReady)throw new Error('offline');
-    const{data,error}=await sb.from('notepad_notes').select('*').order('created_at',{ascending:false});
-    if(error)throw error;
-    npNotes=data.map(r=>({id:r.id,text:r.text,tag:r.tag||'general',priority:r.priority||'med',
-      converted:r.converted||false,createdAt:r.created_at,taskId:r.task_id||null}));
-  }catch(e){
-    const saved=localStorage.getItem('np_notes');
-    if(saved)try{npNotes=JSON.parse(saved);}catch(e2){}
+// ── Persistence: always write localStorage first, then sync to Supabase ──
+function npSaveAll() {
+  // Always persist to localStorage immediately
+  localStorage.setItem(NP_LS_KEY, JSON.stringify(npNotes));
+}
+
+async function npEnsureTable() {
+  // Try to create notepad_notes table if it doesn't exist
+  // Uses Supabase's REST API via a probe upsert then create
+  if (!supabaseReady) return false;
+  try {
+    const { error } = await sb.from('notepad_notes').select('id').limit(1);
+    if (!error) return true; // table exists
+    // Table missing — create it via SQL RPC if available, otherwise skip
+    return false;
+  } catch (e) { return false; }
+}
+
+async function npSyncToSupabase(note) {
+  if (!supabaseReady) return;
+  try {
+    const row = {
+      id: note.id,
+      text: note.text,
+      tag: note.tag || 'general',
+      priority: note.priority || 'med',
+      converted: note.converted || false,
+      created_at: note.createdAt,
+      task_id: note.taskId || null
+    };
+    const { error } = await sb.from('notepad_notes').upsert(row, { onConflict: 'id' });
+    if (error) {
+      // If table doesn't exist, try to create it then retry
+      if (error.code === '42P01') {
+        await npCreateTable();
+        await sb.from('notepad_notes').upsert(row, { onConflict: 'id' });
+      }
+    }
+  } catch (e) { /* silent fail — localStorage is source of truth */ }
+}
+
+async function npCreateTable() {
+  // Create the notepad_notes table via Supabase SQL API
+  if (!supabaseReady) return;
+  try {
+    await sb.rpc('exec_sql', {
+      sql: `CREATE TABLE IF NOT EXISTS notepad_notes (
+        id text PRIMARY KEY,
+        text text NOT NULL,
+        tag text DEFAULT 'general',
+        priority text DEFAULT 'med',
+        converted boolean DEFAULT false,
+        created_at timestamptz DEFAULT now(),
+        task_id text
+      );`
+    });
+  } catch(e) {
+    // RPC may not exist — that's OK, we'll use localStorage
   }
 }
-async function npPushNote(note){
-  try{
-    if(!supabaseReady)throw new Error('offline');
-    const row={id:note.id,text:note.text,tag:note.tag,priority:note.priority,
-      converted:note.converted,created_at:note.createdAt,task_id:note.taskId||null};
-    await sb.from('notepad_notes').upsert(row,{onConflict:'id'});
-  }catch(e){npSaveLocal();}
+
+async function npSyncAllToSupabase() {
+  // Push entire npNotes array to Supabase
+  if (!supabaseReady || !npNotes.length) return;
+  try {
+    const rows = npNotes.map(n => ({
+      id: n.id, text: n.text, tag: n.tag || 'general',
+      priority: n.priority || 'med', converted: n.converted || false,
+      created_at: n.createdAt, task_id: n.taskId || null
+    }));
+    await sb.from('notepad_notes').upsert(rows, { onConflict: 'id' });
+  } catch (e) { /* silent */ }
 }
-async function npDeleteRemote(id){
-  try{if(supabaseReady)await sb.from('notepad_notes').delete().eq('id',id);}catch(e){}
+
+async function npDeleteRemote(id) {
+  npSaveAll(); // localStorage always first
+  if (!supabaseReady) return;
+  try { await sb.from('notepad_notes').delete().eq('id', id); } catch(e) {}
 }
-function npSaveLocal(){localStorage.setItem('np_notes',JSON.stringify(npNotes));}
+
+async function npLoadNotes() {
+  // 1. Always load from localStorage first (instant)
+  const saved = localStorage.getItem(NP_LS_KEY);
+  if (saved) {
+    try { npNotes = JSON.parse(saved); } catch(e) { npNotes = []; }
+  }
+  // 2. Then try Supabase (may have notes from other devices)
+  if (!supabaseReady) return;
+  try {
+    const { data, error } = await sb.from('notepad_notes')
+      .select('*').order('created_at', { ascending: false });
+    if (error) {
+      if (error.code === '42P01') {
+        // Table doesn't exist yet — create it, then push local notes
+        await npCreateTable();
+        await npSyncAllToSupabase();
+      }
+      return;
+    }
+    if (!data || data.length === 0) {
+      // Supabase empty but we have local notes — push them up
+      if (npNotes.length > 0) await npSyncAllToSupabase();
+      return;
+    }
+    // Merge: Supabase wins for notes that exist in both, keep local-only notes
+    const remoteIds = new Set(data.map(r => r.id));
+    const localOnly = npNotes.filter(n => !remoteIds.has(n.id));
+    const remoteNotes = data.map(r => ({
+      id: r.id, text: r.text, tag: r.tag || 'general',
+      priority: r.priority || 'med', converted: r.converted || false,
+      createdAt: r.created_at, taskId: r.task_id || null
+    }));
+    npNotes = [...remoteNotes, ...localOnly]
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    // Push local-only notes to Supabase
+    if (localOnly.length > 0) {
+      for (const n of localOnly) await npSyncToSupabase(n);
+    }
+    npSaveAll(); // sync merged result back to localStorage
+  } catch(e) { /* use localStorage */ }
+}
 
 // ── Helpers ──
 function npTagColor(tag){
@@ -2461,8 +2577,8 @@ function npFmtTime(iso){
   if(diff<86400)return Math.floor(diff/3600)+'h ago';
   return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
 }
-function npEscHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');}
-function npEscAttr(s){return s.replace(/'/g,"&#39;").replace(/"/g,'&quot;');}
+function npEscHtml(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');}
+function npEscAttr(s){return(s||'').replace(/'/g,"&#39;").replace(/"/g,'&quot;');}
 
 // ── In-app Compose UI ──
 function npSelectTag(el){
@@ -2475,16 +2591,18 @@ function npSelectPri(el){
   el.classList.add(p==='high'?'np-high':p==='med'?'np-med':'np-low');
 }
 function npClearForm(){
-  document.getElementById('np-input').value='';
+  const inp=document.getElementById('np-input');if(inp)inp.value='';
   document.querySelectorAll('#tab-notepad .np-tag-pill').forEach(p=>p.classList.remove('active'));
-  document.querySelector('#tab-notepad [data-tag="general"]').classList.add('active');npActiveTag='general';
+  const gen=document.querySelector('#tab-notepad [data-tag="general"]');if(gen)gen.classList.add('active');
+  npActiveTag='general';
   document.querySelectorAll('#tab-notepad .np-pri-btn').forEach(b=>b.className='np-pri-btn');
-  document.querySelector('#tab-notepad [data-pri="med"]').classList.add('np-med');npActivePri='med';
+  const med=document.querySelector('#tab-notepad [data-pri="med"]');if(med)med.classList.add('np-med');
+  npActivePri='med';
 }
 function npSetFilter(f,el){
   npActiveFilter=f;
   document.querySelectorAll('#tab-notepad .np-filter-tab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');npRender();
+  if(el)el.classList.add('active');npRender();
 }
 
 // ── Standalone Compose UI ──
@@ -2498,49 +2616,58 @@ function npSaSelectPri(el){
   el.classList.add(p==='high'?'np-high':p==='med'?'np-med':'np-low');
 }
 function npSaClearForm(){
-  document.getElementById('np-input-sa').value='';
+  const inp=document.getElementById('np-input-sa');if(inp)inp.value='';
   document.querySelectorAll('#np-sa-tags .np-tag-pill').forEach(p=>p.classList.remove('active'));
-  document.querySelector('#np-sa-tags [data-tag="general"]').classList.add('active');npSaActiveTag='general';
+  const gen=document.querySelector('#np-sa-tags [data-tag="general"]');if(gen)gen.classList.add('active');
+  npSaActiveTag='general';
   document.querySelectorAll('#np-sa-pri .np-pri-btn').forEach(b=>b.className='np-pri-btn');
-  document.querySelector('#np-sa-pri [data-pri="med"]').classList.add('np-med');npSaActivePri='med';
+  const med=document.querySelector('#np-sa-pri [data-pri="med"]');if(med)med.classList.add('np-med');
+  npSaActivePri='med';
 }
 function npSaSetFilter(f,el){
   npSaActiveFilter=f;
   document.querySelectorAll('.np-standalone .np-filter-tab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');npSaRender();
+  if(el)el.classList.add('active');npSaRender();
 }
 
 // ── Save note (in-app) ──
 async function npSaveNote(){
-  const text=document.getElementById('np-input').value.trim();
+  const inp=document.getElementById('np-input');
+  const text=(inp?inp.value:'').trim();
   if(!text){showToast('⚠','Write something first');return;}
   const note={id:uid(),text,tag:npActiveTag,priority:npActivePri,converted:false,createdAt:new Date().toISOString()};
-  npNotes.unshift(note);npClearForm();npRender();npSaRender();
+  npNotes.unshift(note);
+  npSaveAll(); // localStorage first — synchronous
+  npClearForm();npRender();npSaRender();
   showToast('✦','Note saved');
-  await npPushNote(note);
+  schedulePush(); // sync all data including notes
 }
 
 // ── Save note (standalone) ──
 async function npSaSaveNote(){
-  const text=document.getElementById('np-input-sa').value.trim();
+  const inp=document.getElementById('np-input-sa');
+  const text=(inp?inp.value:'').trim();
   if(!text){showToast('⚠','Write something first');return;}
   const note={id:uid(),text,tag:npSaActiveTag,priority:npSaActivePri,converted:false,createdAt:new Date().toISOString()};
-  npNotes.unshift(note);npSaClearForm();npSaRender();npRender();
+  npNotes.unshift(note);
+  npSaveAll(); // localStorage first — synchronous
+  npSaClearForm();npSaRender();npRender();
   showToast('✦','Note saved');
-  await npPushNote(note);
+  schedulePush(); // sync all data including notes
 }
 
 // ── Delete note ──
 async function npDeleteNote(id,e){
-  e.stopPropagation();
+  if(e)e.stopPropagation();
   npNotes=npNotes.filter(n=>n.id!==id);
+  npSaveAll();
   npRender();npSaRender();showToast('↓','Note deleted');
-  await npDeleteRemote(id);
+  schedulePush();
 }
 
 // ── Convert modal ──
 function npOpenConvert(id,e){
-  e.stopPropagation();
+  if(e)e.stopPropagation();
   npConvertingNote=npNotes.find(n=>n.id===id);
   if(!npConvertingNote)return;
   const firstLine=npConvertingNote.text.split('\n')[0].slice(0,80);
@@ -2573,8 +2700,7 @@ function npBuildProjList(){
 function npToggleProjDd(){
   const dd=document.getElementById('np-proj-dd');
   const trigger=document.getElementById('np-proj-trigger');
-  const open=dd.classList.contains('open');
-  if(open){npCloseProjDd();return;}
+  if(dd.classList.contains('open')){npCloseProjDd();return;}
   npBuildProjList();
   dd.classList.add('open');trigger.classList.add('open');
 }
@@ -2589,51 +2715,46 @@ function npPickProj(name,color){
   document.getElementById('np-proj-dot').style.background=name?color:'var(--border2)';
   npCloseProjDd();npHideNewProj();
 }
-
-// ── New project ──
 function npBuildColorSwatches(){
   const el=document.getElementById('np-new-proj-colors');if(!el)return;
   el.innerHTML=PROJ_COLORS.map(c=>`
     <div class="np-color-swatch ${c===npNewProjColor?'active':''}"
-         style="background:${c};border-color:${c===npNewProjColor?'var(--text)':'transparent'};${c===npNewProjColor?'transform:scale(1.2);':''}"
+         style="background:${c};border-color:${c===npNewProjColor?'var(--text)':'transparent'}"
          onclick="npPickColor('${c}',this)"></div>`).join('');
 }
 function npPickColor(c,el){
   npNewProjColor=c;
-  document.querySelectorAll('.np-color-swatch').forEach(s=>{
-    s.classList.remove('active');s.style.borderColor='transparent';s.style.transform='';
-  });
-  el.classList.add('active');el.style.borderColor='var(--text)';el.style.transform='scale(1.2)';
+  document.querySelectorAll('.np-color-swatch').forEach(s=>{s.classList.remove('active');s.style.borderColor='transparent';});
+  el.classList.add('active');el.style.borderColor='var(--text)';
 }
 function npShowNewProj(){
   npCloseProjDd();
   const panel=document.getElementById('np-new-proj-panel');
-  panel.style.display='flex';
-  document.getElementById('np-new-proj-name').value='';
-  document.getElementById('np-new-proj-name').focus();
-  npBuildColorSwatches();
+  if(panel){panel.style.display='flex';npBuildColorSwatches();}
+  const inp=document.getElementById('np-new-proj-name');
+  if(inp){inp.value='';inp.focus();}
 }
 function npHideNewProj(){
   const panel=document.getElementById('np-new-proj-panel');
   if(panel)panel.style.display='none';
 }
 async function npCreateProj(){
-  const name=document.getElementById('np-new-proj-name').value.trim();
+  const name=(document.getElementById('np-new-proj-name')?.value||'').trim();
   if(!name){showToast('⚠','Enter a project name');return;}
   if(projects.find(p=>p.name===name)){showToast('⚠','Project already exists');return;}
   const p={name,color:npNewProjColor,icon:'◆',desc:'',folder:''};
   projects.push(p);saveProjects();
   npHideNewProj();npPickProj(name,npNewProjColor);
-  render();showToast('◎',`Project "${name}" created`);
+  render();showToast('◎',`"${name}" created`);
 }
 
 // ── Do convert ──
 async function npDoConvert(){
-  const name=document.getElementById('np-conv-name').value.trim();
+  const name=(document.getElementById('np-conv-name')?.value||'').trim();
   if(!name){showToast('⚠','Task name required');return;}
   const priority=document.getElementById('np-conv-priority').value;
   const status=document.getElementById('np-conv-status').value;
-  const project=document.getElementById('np-conv-project').value.trim();
+  const project=(document.getElementById('np-conv-project')?.value||'').trim();
   const due=document.getElementById('np-conv-due').value;
   const taskId=uid();
   tasks.push({id:taskId,name,project,priority,status,due,
@@ -2641,45 +2762,15 @@ async function npDoConvert(){
   save();
   const note=npNotes.find(n=>n.id===npConvertingNote.id);
   if(note){note.converted=true;note.taskId=taskId;}
+  npSaveAll(); // persist conversion state
   npRender();npSaRender();render();npCloseConvert();
   showToast('✦',`Task "${name}" created!`);
-  if(note)await npPushNote(note);
+  schedulePush();
 }
 
-// ── Render notes (in-app) ──
-function npRender(){
-  let list=npNotes;
-  if(npActiveFilter==='pending')list=npNotes.filter(n=>!n.converted);
-  if(npActiveFilter==='converted')list=npNotes.filter(n=>n.converted);
-  const countEl=document.getElementById('np-count');
-  if(countEl)countEl.textContent=`${list.length} note${list.length!==1?'s':''}`;
-  const el=document.getElementById('np-notes-list');if(!el)return;
-  if(!list.length){
-    const msgs={all:'No notes yet — jot one!',pending:'No pending notes',converted:'No converted notes'};
-    el.innerHTML=`<div class="np-empty"><div class="np-empty-icon">📝</div><div class="np-empty-text">${msgs[npActiveFilter]}</div></div>`;
-    return;
-  }
-  el.innerHTML=npBuildNoteCards(list);
-}
-
-// ── Render notes (standalone) ──
-function npSaRender(){
-  let list=npNotes;
-  if(npSaActiveFilter==='pending')list=npNotes.filter(n=>!n.converted);
-  if(npSaActiveFilter==='converted')list=npNotes.filter(n=>n.converted);
-  const countEl=document.getElementById('np-sa-count');
-  if(countEl)countEl.textContent=`${list.length} note${list.length!==1?'s':''}`;
-  const el=document.getElementById('np-sa-notes-list');if(!el)return;
-  if(!list.length){
-    const msgs={all:'No notes yet — jot one!',pending:'No pending notes',converted:'No converted notes'};
-    el.innerHTML=`<div class="np-empty"><div class="np-empty-icon">📝</div><div class="np-empty-text">${msgs[npSaActiveFilter]}</div></div>`;
-    return;
-  }
-  el.innerHTML=npBuildNoteCards(list);
-}
-
-// ── Shared note card HTML builder ──
+// ── Render notes (shared card builder) ──
 function npBuildNoteCards(list){
+  if(!list.length)return'';
   return list.map(n=>`
     <div class="np-note-card ${n.converted?'np-converted':''}">
       <div class="np-card-top">
@@ -2698,31 +2789,61 @@ function npBuildNoteCards(list){
     </div>`).join('');
 }
 
-// ── Wire modal overlay click ──
-document.getElementById('np-convert-modal').addEventListener('click',function(e){
+function npGetFiltered(filter){
+  if(filter==='pending')return npNotes.filter(n=>!n.converted);
+  if(filter==='converted')return npNotes.filter(n=>n.converted);
+  return npNotes;
+}
+
+// ── Render in-app notepad ──
+function npRender(){
+  const list=npGetFiltered(npActiveFilter);
+  const countEl=document.getElementById('np-count');
+  if(countEl)countEl.textContent=`${list.length} note${list.length!==1?'s':''}`;
+  const el=document.getElementById('np-notes-list');if(!el)return;
+  const msgs={all:'No notes yet — jot one!',pending:'No pending notes',converted:'No converted notes'};
+  el.innerHTML=list.length?npBuildNoteCards(list)
+    :`<div class="np-empty"><div class="np-empty-icon">📝</div><div class="np-empty-text">${msgs[npActiveFilter]}</div></div>`;
+}
+
+// ── Render standalone notepad ──
+function npSaRender(){
+  const list=npGetFiltered(npSaActiveFilter);
+  const countEl=document.getElementById('np-sa-count');
+  if(countEl)countEl.textContent=`${list.length} note${list.length!==1?'s':''}`;
+  const el=document.getElementById('np-sa-notes-list');if(!el)return;
+  const msgs={all:'No notes yet — jot one!',pending:'No pending notes',converted:'No converted notes'};
+  el.innerHTML=list.length?npBuildNoteCards(list)
+    :`<div class="np-empty"><div class="np-empty-icon">📝</div><div class="np-empty-text">${msgs[npActiveFilter]}</div></div>`;
+}
+
+// ── Wire modal and outside-click ──
+document.getElementById('np-convert-modal')?.addEventListener('click',function(e){
   if(e.target===this)npCloseConvert();
 });
-// ── Wire outside-click to close project dropdown ──
 document.addEventListener('click',e=>{
   if(!document.getElementById('np-proj-wrap')?.contains(e.target))npCloseProjDd();
 });
-// ── Ctrl+Enter shortcut (in-app) ──
 document.getElementById('np-input')?.addEventListener('keydown',e=>{
   if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();npSaveNote();}
 });
-// ── Ctrl+Enter shortcut (standalone) ──
 document.getElementById('np-input-sa')?.addEventListener('keydown',e=>{
   if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();npSaSaveNote();}
 });
-// ── Load notepad notes alongside main pull ──
-const _origPullFn=pullFromSupabase;
-pullFromSupabase=async function(){
-  await _origPullFn();
-  await npLoadNotes();
-  npRender();npSaRender();
-};
-// Immediate localStorage render while Supabase loads
-(()=>{const saved=localStorage.getItem('np_notes');if(saved){try{npNotes=JSON.parse(saved);}catch(e){}npRender();npSaRender();}})();
+
+// ── Bootstrap: load localStorage immediately, then pull Supabase ──
+(()=>{
+  const saved=localStorage.getItem(NP_LS_KEY)
+    || localStorage.getItem('np_notes'); // migrate old key
+  if(saved){
+    try{npNotes=JSON.parse(saved);}catch(e){npNotes=[];}
+    // Migrate old key to new key
+    if(!localStorage.getItem(NP_LS_KEY))npSaveAll();
+    npRender();npSaRender();
+  }
+})();
+
+// Pull now integrated into pullFromSupabase directly
 
 render();
 </script>
