@@ -1093,13 +1093,11 @@ async function pullFromSupabase(){
     localStorage.setItem('cc_tb',JSON.stringify(timeBlocks));
   }
   if(np&&!np.error&&np.data){
-    const local=localStorage.getItem('np_notes_v2');
-    const localNotes=local?JSON.parse(local):[];
-    const remoteIds=new Set(np.data.map(r=>r.id));
-    const localOnly=localNotes.filter(n=>!remoteIds.has(n.id));
-    npNotes=[...np.data.map(r=>({id:r.id,text:r.text,tag:r.tag||'general',
+    // Supabase is source of truth — trust it completely
+    // Do NOT merge local-only notes (they may have been deleted on another device)
+    npNotes=np.data.map(r=>({id:r.id,text:r.text,tag:r.tag||'general',
       priority:r.priority||'med',converted:r.converted||false,
-      createdAt:r.created_at,taskId:r.task_id||null})),...localOnly]
+      createdAt:r.created_at,taskId:r.task_id||null}))
       .sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
     localStorage.setItem('np_notes_v2',JSON.stringify(npNotes));
   } else if(np&&np.error&&np.error.code==='42P01'){
@@ -1138,18 +1136,13 @@ async function pushToSupabase(){
     const sentinelRow={name:'__cc_folders__',color:'#000',icon:'_',
       description:JSON.stringify(folders),folder:'',sort_order:9999};
     const projRows=[...projects.map((p,i)=>toRow_project(p,i)),sentinelRow];
-    // Notepad notes row converter
-    const npRows=npNotes.map(n=>({
-      id:n.id, text:n.text, tag:n.tag||'general',
-      priority:n.priority||'med', converted:n.converted||false,
-      created_at:n.createdAt, task_id:n.taskId||null
-    }));
     const results=await Promise.all([
       sb.from('tasks').upsert(tasks.map(toRow_task),{onConflict:'id'}),
       sb.from('time_blocks').upsert(timeBlocks.map(toRow_tb),{onConflict:'id'}),
       sb.from('updates').upsert(updates.map(toRow_update),{onConflict:'id'}),
       sb.from('projects').upsert(projRows,{onConflict:'name'}),
-      npRows.length ? sb.from('notepad_notes').upsert(npRows,{onConflict:'id'}) : Promise.resolve({error:null}),
+      // notepad_notes intentionally excluded — each note op upserts/deletes directly
+      // to avoid stale-state resurrection from batch push
     ]);
     const errs=results.filter(r=>r.error);
     if(errs.length){console.warn('Push errors:',errs.map(r=>r.error));setSyncStatus('offline');}
@@ -2514,123 +2507,14 @@ async function npDeleteRemote(id) {
 }
 
 async function npLoadNotes() {
-  // 1. Always load from localStorage first (instant)
+  // Supabase pull is now integrated in pullFromSupabase().
+  // This function only loads from localStorage as offline fallback.
   const saved = localStorage.getItem(NP_LS_KEY);
   if (saved) {
     try { npNotes = JSON.parse(saved); } catch(e) { npNotes = []; }
   }
-  // 2. Then try Supabase (may have notes from other devices)
-  if (!supabaseReady) return;
-  try {
-    const { data, error } = await sb.from('notepad_notes')
-      .select('*').order('created_at', { ascending: false });
-    if (error) {
-      if (error.code === '42P01') {
-        // Table doesn't exist yet — create it, then push local notes
-        await npCreateTable();
-        await npSyncAllToSupabase();
-      }
-      return;
-    }
-    if (!data || data.length === 0) {
-      // Supabase empty but we have local notes — push them up
-      if (npNotes.length > 0) await npSyncAllToSupabase();
-      return;
-    }
-    // Merge: Supabase wins for notes that exist in both, keep local-only notes
-    const remoteIds = new Set(data.map(r => r.id));
-    const localOnly = npNotes.filter(n => !remoteIds.has(n.id));
-    const remoteNotes = data.map(r => ({
-      id: r.id, text: r.text, tag: r.tag || 'general',
-      priority: r.priority || 'med', converted: r.converted || false,
-      createdAt: r.created_at, taskId: r.task_id || null
-    }));
-    npNotes = [...remoteNotes, ...localOnly]
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    // Push local-only notes to Supabase
-    if (localOnly.length > 0) {
-      for (const n of localOnly) await npSyncToSupabase(n);
-    }
-    npSaveAll(); // sync merged result back to localStorage
-  } catch(e) { /* use localStorage */ }
 }
 
-// ── Helpers ──
-function npTagColor(tag){
-  const m={general:'rgba(255,255,255,0.1)',clinical:'rgba(34,211,255,0.14)',
-    clinisynq:'rgba(123,104,255,0.18)',research:'rgba(192,132,252,0.16)',
-    personal:'rgba(255,204,68,0.15)',idea:'rgba(0,229,160,0.16)'};
-  return m[tag]||m.general;
-}
-function npTagText(tag){
-  const m={general:'rgba(255,255,255,0.45)',clinical:'rgba(34,211,255,0.9)',
-    clinisynq:'rgba(123,104,255,0.9)',research:'rgba(192,132,252,0.9)',
-    personal:'rgba(255,204,68,0.9)',idea:'rgba(0,229,160,0.9)'};
-  return m[tag]||m.general;
-}
-function npPriLabel(p){return p==='high'?'▲ HIGH':p==='med'?'◆ MED':'▼ LOW';}
-function npPriColor(p){return p==='high'?'var(--rose)':p==='med'?'var(--amber)':'var(--green)';}
-function npFmtTime(iso){
-  const d=new Date(iso),diff=(Date.now()-d)/1000;
-  if(diff<60)return 'just now';
-  if(diff<3600)return Math.floor(diff/60)+'m ago';
-  if(diff<86400)return Math.floor(diff/3600)+'h ago';
-  return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
-}
-function npEscHtml(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');}
-function npEscAttr(s){return(s||'').replace(/'/g,"&#39;").replace(/"/g,'&quot;');}
-
-// ── In-app Compose UI ──
-function npSelectTag(el){
-  document.querySelectorAll('#tab-notepad .np-tag-pill').forEach(p=>p.classList.remove('active'));
-  el.classList.add('active');npActiveTag=el.dataset.tag;
-}
-function npSelectPri(el){
-  document.querySelectorAll('#tab-notepad .np-pri-btn').forEach(b=>b.className='np-pri-btn');
-  const p=el.dataset.pri;npActivePri=p;
-  el.classList.add(p==='high'?'np-high':p==='med'?'np-med':'np-low');
-}
-function npClearForm(){
-  const inp=document.getElementById('np-input');if(inp)inp.value='';
-  document.querySelectorAll('#tab-notepad .np-tag-pill').forEach(p=>p.classList.remove('active'));
-  const gen=document.querySelector('#tab-notepad [data-tag="general"]');if(gen)gen.classList.add('active');
-  npActiveTag='general';
-  document.querySelectorAll('#tab-notepad .np-pri-btn').forEach(b=>b.className='np-pri-btn');
-  const med=document.querySelector('#tab-notepad [data-pri="med"]');if(med)med.classList.add('np-med');
-  npActivePri='med';
-}
-function npSetFilter(f,el){
-  npActiveFilter=f;
-  document.querySelectorAll('#tab-notepad .np-filter-tab').forEach(t=>t.classList.remove('active'));
-  if(el)el.classList.add('active');npRender();
-}
-
-// ── Standalone Compose UI ──
-function npSaSelectTag(el){
-  document.querySelectorAll('#np-sa-tags .np-tag-pill').forEach(p=>p.classList.remove('active'));
-  el.classList.add('active');npSaActiveTag=el.dataset.tag;
-}
-function npSaSelectPri(el){
-  document.querySelectorAll('#np-sa-pri .np-pri-btn').forEach(b=>b.className='np-pri-btn');
-  const p=el.dataset.pri;npSaActivePri=p;
-  el.classList.add(p==='high'?'np-high':p==='med'?'np-med':'np-low');
-}
-function npSaClearForm(){
-  const inp=document.getElementById('np-input-sa');if(inp)inp.value='';
-  document.querySelectorAll('#np-sa-tags .np-tag-pill').forEach(p=>p.classList.remove('active'));
-  const gen=document.querySelector('#np-sa-tags [data-tag="general"]');if(gen)gen.classList.add('active');
-  npSaActiveTag='general';
-  document.querySelectorAll('#np-sa-pri .np-pri-btn').forEach(b=>b.className='np-pri-btn');
-  const med=document.querySelector('#np-sa-pri [data-pri="med"]');if(med)med.classList.add('np-med');
-  npSaActivePri='med';
-}
-function npSaSetFilter(f,el){
-  npSaActiveFilter=f;
-  document.querySelectorAll('.np-standalone .np-filter-tab').forEach(t=>t.classList.remove('active'));
-  if(el)el.classList.add('active');npSaRender();
-}
-
-// ── Save note (in-app) ──
 async function npSaveNote(){
   const inp=document.getElementById('np-input');
   const text=(inp?inp.value:'').trim();
@@ -2640,7 +2524,15 @@ async function npSaveNote(){
   npSaveAll(); // localStorage first — synchronous
   npClearForm();npRender();npSaRender();
   showToast('✦','Note saved');
-  schedulePush(); // sync all data including notes
+  // Upsert just this note immediately (don't rely on batch push which could resurrect deleted notes)
+  if(supabaseReady){
+    try{
+      await sb.from('notepad_notes').upsert({
+        id:note.id,text:note.text,tag:note.tag,priority:note.priority,
+        converted:false,created_at:note.createdAt,task_id:null
+      },{onConflict:'id'});
+    }catch(e2){console.warn('np upsert failed:',e2);}
+  }
 }
 
 // ── Save note (standalone) ──
@@ -2653,7 +2545,15 @@ async function npSaSaveNote(){
   npSaveAll(); // localStorage first — synchronous
   npSaClearForm();npSaRender();npRender();
   showToast('✦','Note saved');
-  schedulePush(); // sync all data including notes
+  // Upsert just this note immediately
+  if(supabaseReady){
+    try{
+      await sb.from('notepad_notes').upsert({
+        id:note.id,text:note.text,tag:note.tag,priority:note.priority,
+        converted:false,created_at:note.createdAt,task_id:null
+      },{onConflict:'id'});
+    }catch(e2){console.warn('np sa upsert failed:',e2);}
+  }
 }
 
 // ── Delete note ──
@@ -2662,7 +2562,11 @@ async function npDeleteNote(id,e){
   npNotes=npNotes.filter(n=>n.id!==id);
   npSaveAll();
   npRender();npSaRender();showToast('↓','Note deleted');
-  schedulePush();
+  // Delete immediately from Supabase — don't use push (push only upserts, never deletes)
+  if(supabaseReady){
+    try{ await sb.from('notepad_notes').delete().eq('id',id); }
+    catch(e2){ console.warn('np delete sync failed:',e2); }
+  }
 }
 
 // ── Convert modal ──
@@ -2765,7 +2669,16 @@ async function npDoConvert(){
   npSaveAll(); // persist conversion state
   npRender();npSaRender();render();npCloseConvert();
   showToast('✦',`Task "${name}" created!`);
-  schedulePush();
+  schedulePush(); // push task changes
+  // Also update the note's converted state in Supabase immediately
+  if(note && supabaseReady){
+    try{
+      await sb.from('notepad_notes').upsert({
+        id:note.id,text:note.text,tag:note.tag,priority:note.priority,
+        converted:true,created_at:note.createdAt,task_id:taskId
+      },{onConflict:'id'});
+    }catch(e2){console.warn('np convert sync failed:',e2);}
+  }
 }
 
 // ── Render notes (shared card builder) ──
