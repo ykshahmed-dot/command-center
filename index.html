@@ -451,6 +451,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 </div>
 
 <div id="restore-banner"><div class="rb-spin"></div><span>Restoring your data from cloud…</span></div>
+<div id="cc-debug" style="display:none;position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:9999;background:#1a1a2e;border:2px solid #7b68ff;color:#e2e8f0;padding:16px 20px;border-radius:12px;font-family:monospace;font-size:12px;max-width:90vw;line-height:1.8;white-space:pre-wrap;box-shadow:0 8px 32px rgba(0,0,0,0.6);"></div>
 <div class="shell">
   <aside class="sidebar">
     <div class="sidebar-header">
@@ -1101,6 +1102,8 @@ async function initSupabase(){
     });
   }catch(e){
     console.warn('Supabase init failed:', e);
+    const dbg = document.getElementById('cc-debug');
+    if(dbg){ dbg.innerHTML='<b>Init FAILED:</b> '+e.message+'<br>window.supabase exists: '+(!!window.supabase)+'<br>SUPABASE_URL: '+SUPABASE_URL.slice(0,40); dbg.style.display='block'; }
     setSyncStatus('offline');
     hideRestoreBanner();
     setTimeout(retryConnection, 15000);
@@ -1178,6 +1181,8 @@ async function pullFromSupabase(){
     catch(npErr){ np={error:{code:'fetch_failed'},data:null}; }
   }catch(fetchErr){
     console.warn('Supabase pull failed/timed out:',fetchErr.message);
+    const dbg = document.getElementById('cc-debug');
+    if(dbg){ dbg.innerHTML='<b>Pull FAILED:</b> '+fetchErr.message+'<br>supabaseReady: '+supabaseReady+'<br>window.supabase exists: '+(!!window.supabase); dbg.style.display='block'; }
     // Fall back to localStorage so app still shows
     tasks=JSON.parse(localStorage.getItem('cc_tasks')||'[]');
     timeBlocks=JSON.parse(localStorage.getItem('cc_tb')||'[]');
@@ -1187,6 +1192,16 @@ async function pullFromSupabase(){
     runMigration();render();npRender();npSaRender();
     setSyncStatus('offline');
     return;
+  }
+  // ── DEBUG: show what Supabase returned ──
+  const dbg = document.getElementById('cc-debug');
+  if(dbg){
+    const tInfo = t.error ? 'TASKS ERROR: '+JSON.stringify(t.error) : 'tasks: '+t.data.length+' rows';
+    const prInfo = pr.error ? 'PROJECTS ERROR: '+JSON.stringify(pr.error) : 'projects: '+pr.data.length+' rows';
+    const npInfo = np ? (np.error ? 'notepad ERROR: '+JSON.stringify(np.error) : 'notepad: '+np.data.length+' rows') : 'notepad: skipped';
+    dbg.innerHTML = '<b>Supabase pull result:</b><br>'+tInfo+'<br>'+prInfo+'<br>'+npInfo+'<br>supabaseReady: '+supabaseReady;
+    dbg.style.display = 'block';
+    setTimeout(()=>dbg.style.display='none', 12000);
   }
   if(t.error){console.warn('tasks pull error:',t.error);}
   else{
