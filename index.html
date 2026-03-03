@@ -361,6 +361,40 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   .np-filter-row{margin-left:0;order:3;width:100%;}
 }
 
+
+/* ── LOADING OVERLAY ── */
+#app-loader{
+  position:fixed;inset:0;z-index:9999;
+  background:var(--bg);
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:18px;
+  transition:opacity 0.4s ease, transform 0.4s ease;
+}
+#app-loader.hidden{
+  opacity:0;pointer-events:none;transform:scale(1.02);
+}
+.loader-logo{
+  font-family:'Bricolage Grotesque',sans-serif;
+  font-size:28px;font-weight:800;letter-spacing:-1px;
+  background:linear-gradient(135deg,var(--accent),var(--violet,#a855f7));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.loader-spinner{
+  width:32px;height:32px;
+  border:2.5px solid var(--border2);
+  border-top-color:var(--accent);
+  border-radius:50%;
+  animation:spin 0.8s linear infinite;
+}
+.loader-status{
+  font-family:'Geist Mono',monospace;
+  font-size:10px;letter-spacing:2px;text-transform:uppercase;
+  color:var(--text3);
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+
 </style>
 </head>
 <body data-theme="dark">
@@ -441,6 +475,13 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       </div>
     </div>
   </div>
+</div>
+
+<!-- LOADING OVERLAY -->
+<div id="app-loader">
+  <div class="loader-logo">Command Center</div>
+  <div class="loader-spinner"></div>
+  <div class="loader-status" id="loader-status">Connecting…</div>
 </div>
 
 <div class="shell">
@@ -1053,23 +1094,108 @@ function setSyncStatus(s){
   const st={syncing:{t:'⟳ Syncing…',c:'var(--amber)'},synced:{t:'✦ Synced',c:'var(--green)'},offline:{t:'◌ Offline',c:'var(--text3)'},saving:{t:'⟳ Saving…',c:'var(--accent)'}};
   const v=st[s]||st.offline;if(el){el.textContent=v.t;el.style.color=v.c;}
 }
+async // Track when we last pushed so we skip self-triggered pulls
+let lastPushAt = 0;
+let realtimeChannel = null;
+let pollTimer = null;
+
 async function initSupabase(){
+  const loaderStatus = document.getElementById('loader-status');
+  const loader = document.getElementById('app-loader');
+  const hideLoader = () => { if(loader) loader.classList.add('hidden'); };
+
   try{
-    sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-    supabaseReady=true;
+    if(loaderStatus) loaderStatus.textContent = 'Connecting…';
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    supabaseReady = true;
+    setSyncStatus('syncing');
+    if(loaderStatus) loaderStatus.textContent = 'Loading data…';
+    await pullFromSupabase();
+    setSyncStatus('synced');
+    hideLoader();
+
+    // ── Realtime: re-pull whenever any table changes on another device ──
+    startRealtime();
+
+    // ── Polling fallback: re-pull every 30s in case WebSocket drops ──
+    startPolling();
+
+    // ── Re-sync when tab becomes visible again (switching back from another app) ──
+    document.addEventListener('visibilitychange', () => {
+      if(document.visibilityState === 'visible' && supabaseReady){
+        const sinceLastPush = Date.now() - lastPushAt;
+        if(sinceLastPush > 2000){ // don't pull if we just pushed
+          setSyncStatus('syncing');
+          pullFromSupabase().then(() => setSyncStatus('synced'));
+        }
+      }
+    });
+
+  }catch(e){
+    console.warn('Supabase init failed:', e);
+    setSyncStatus('offline');
+    if(loaderStatus) loaderStatus.textContent = 'Offline mode';
+    tasks = JSON.parse(localStorage.getItem('cc_tasks')||'[]');
+    timeBlocks = JSON.parse(localStorage.getItem('cc_tb')||'[]');
+    updates = JSON.parse(localStorage.getItem('cc_updates')||'[]');
+    projects = JSON.parse(localStorage.getItem('cc_projects')||'null')||[];
+    npNotes = JSON.parse(localStorage.getItem('np_notes_v2')||'[]');
+    runMigration(); render(); npRender(); npSaRender();
+    hideLoader();
+
+    // Retry connection every 15s when offline
+    setTimeout(retryConnection, 15000);
+  }
+}
+
+async function retryConnection(){
+  if(supabaseReady) return;
+  try{
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    supabaseReady = true;
     setSyncStatus('syncing');
     await pullFromSupabase();
     setSyncStatus('synced');
+    startRealtime();
+    startPolling();
   }catch(e){
-    console.warn('Supabase init failed:',e);
-    setSyncStatus('offline');
-    // Fall back to localStorage
-    tasks=JSON.parse(localStorage.getItem('cc_tasks')||'[]');
-    timeBlocks=JSON.parse(localStorage.getItem('cc_tb')||'[]');
-    updates=JSON.parse(localStorage.getItem('cc_updates')||'[]');
-    projects=JSON.parse(localStorage.getItem('cc_projects')||'null')||[];
-    runMigration();render();
+    setTimeout(retryConnection, 15000);
   }
+}
+
+function startRealtime(){
+  if(realtimeChannel) realtimeChannel.unsubscribe();
+
+  realtimeChannel = sb.channel('cc-sync')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, handleRemoteChange)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'time_blocks' }, handleRemoteChange)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'updates' }, handleRemoteChange)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, handleRemoteChange)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'notepad_notes' }, handleRemoteChange)
+    .subscribe();
+}
+
+function startPolling(){
+  if(pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(async () => {
+    if(!supabaseReady || !document.hasFocus()) return;
+    const sinceLastPush = Date.now() - lastPushAt;
+    if(sinceLastPush < 3000) return; // skip if we just pushed
+    await pullFromSupabase();
+  }, 30000);
+}
+
+// Debounce remote changes so rapid bursts don't cause multiple pulls
+let remoteChangeTimer = null;
+function handleRemoteChange(payload){
+  const sinceLastPush = Date.now() - lastPushAt;
+  if(sinceLastPush < 2000) return; // this is our own push echoing back
+  clearTimeout(remoteChangeTimer);
+  remoteChangeTimer = setTimeout(async () => {
+    setSyncStatus('syncing');
+    await pullFromSupabase();
+    setSyncStatus('synced');
+  }, 300);
 }
 
 // ── PULL: Supabase is source of truth ──
@@ -1124,11 +1250,14 @@ async function pullFromSupabase(){
   }
   runMigration();
   render();
+  npRender();
+  npSaRender();
 }
 
 // ── PUSH: write everything to Supabase ──
 async function pushToSupabase(){
   if(!supabaseReady)return;
+  lastPushAt = Date.now(); // stamp before push so realtime echo is ignored
   setSyncStatus('saving');
   try{
     // Pack folder structure into sentinel row so it syncs across devices
@@ -2524,7 +2653,8 @@ async function npSaveNote(){
   npSaveAll(); // localStorage first — synchronous
   npClearForm();npRender();npSaRender();
   showToast('✦','Note saved');
-  // Upsert just this note immediately (don't rely on batch push which could resurrect deleted notes)
+  // Upsert just this note immediately
+  lastPushAt = Date.now();
   if(supabaseReady){
     try{
       await sb.from('notepad_notes').upsert({
@@ -2562,7 +2692,8 @@ async function npDeleteNote(id,e){
   npNotes=npNotes.filter(n=>n.id!==id);
   npSaveAll();
   npRender();npSaRender();showToast('↓','Note deleted');
-  // Delete immediately from Supabase — don't use push (push only upserts, never deletes)
+  // Delete immediately from Supabase
+  lastPushAt = Date.now();
   if(supabaseReady){
     try{ await sb.from('notepad_notes').delete().eq('id',id); }
     catch(e2){ console.warn('np delete sync failed:',e2); }
@@ -2744,21 +2875,9 @@ document.getElementById('np-input-sa')?.addEventListener('keydown',e=>{
   if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();npSaSaveNote();}
 });
 
-// ── Bootstrap: load localStorage immediately, then pull Supabase ──
-(()=>{
-  const saved=localStorage.getItem(NP_LS_KEY)
-    || localStorage.getItem('np_notes'); // migrate old key
-  if(saved){
-    try{npNotes=JSON.parse(saved);}catch(e){npNotes=[];}
-    // Migrate old key to new key
-    if(!localStorage.getItem(NP_LS_KEY))npSaveAll();
-    npRender();npSaRender();
-  }
-})();
+// Note bootstrap handled in initSupabase (waits for Supabase, no localStorage flash)
 
-// Pull now integrated into pullFromSupabase directly
-
-render();
+// Rendering is handled after Supabase pull completes in initSupabase()
 </script>
 </body>
 </html>
