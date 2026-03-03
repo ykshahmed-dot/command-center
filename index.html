@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Command Center</title>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Geist+Mono:wght@300;400;500;600&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 [data-theme="dark"]{--bg:#0d0d0f;--surface:#141417;--surface2:#1c1c21;--surface3:#242429;--border:#2a2a31;--border2:#36363f;--text:#e8e8ed;--text2:#9898a8;--text3:#5a5a6a;--accent:#7c6ef5;--accent2:#5b4dd4;--green:#34d399;--amber:#fbbf24;--rose:#fb7185;--sky:#38bdf8;--violet:#a78bfa;--topbar-bg:rgba(13,13,15,0.92);--grad1:rgba(124,110,245,0.12);--grad2:rgba(52,211,153,0.06);}
@@ -16,18 +16,18 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .shell{display:flex;width:100%;height:100vh;position:relative;z-index:1;overflow:hidden;}
 .sidebar{width:256px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;height:100%;}
 .sidebar-header{padding:18px 16px 13px;border-bottom:1px solid var(--border);flex-shrink:0;}
-.logo{font-family:'Bricolage Grotesque',sans-serif;font-size:15px;font-weight:800;letter-spacing:-0.3px;display:flex;align-items:center;gap:9px;}
+.logo{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;letter-spacing:-0.3px;display:flex;align-items:center;gap:9px;}
 .logo-mark{width:26px;height:26px;background:var(--accent);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;box-shadow:0 0 16px color-mix(in srgb,var(--accent) 35%,transparent);}
-.sidebar-date{font-family:'Geist Mono',monospace;font-size:9px;color:var(--text3);margin-top:4px;letter-spacing:0.5px;}
+.sidebar-date{font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);margin-top:4px;letter-spacing:0.5px;}
 .sidebar-section{padding:12px 10px 6px;flex-shrink:0;}
-.sidebar-label{font-family:'Geist Mono',monospace;font-size:9px;font-weight:500;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;padding:0 7px;margin-bottom:3px;}
+.sidebar-label{font-family:'DM Mono',monospace;font-size:9px;font-weight:500;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;padding:0 7px;margin-bottom:3px;}
 .nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--text2);transition:all 0.15s;user-select:none;}
 .nav-item:hover{background:var(--surface2);color:var(--text);}
 .nav-item.active{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent);}
 .nav-item .icon{font-size:13px;width:17px;text-align:center;flex-shrink:0;}
 .project-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 .sidebar-folder{margin-bottom:2px;}
-.sidebar-folder-header{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:8px;cursor:pointer;color:var(--text2);font-family:'Bricolage Grotesque',sans-serif;font-size:11.5px;font-weight:700;letter-spacing:0;text-transform:none;user-select:none;transition:background 0.1s;}
+.sidebar-folder-header{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:8px;cursor:pointer;color:var(--text2);font-family:'Syne',sans-serif;font-size:11.5px;font-weight:700;letter-spacing:0;text-transform:none;user-select:none;transition:background 0.1s;}
 .sidebar-folder-header:hover{background:var(--surface2);color:var(--text2);}
 .sidebar-folder-header.drag-over{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent);}
 .sidebar-folder-arrow{font-size:10px;transition:transform 0.18s;flex-shrink:0;color:var(--text3);}
@@ -44,12 +44,12 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .sidebar-ungroup-zone.drag-over-zone{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,transparent);}
 .sidebar-footer{margin-top:auto;padding:13px 14px;border-top:1px solid var(--border);flex-shrink:0;}
 .theme-switcher{display:flex;gap:5px;margin-bottom:8px;}
-.theme-btn{flex:1;padding:5px 0;border-radius:6px;border:1.5px solid var(--border);cursor:pointer;font-size:10.5px;font-family:'Geist Mono',monospace;text-align:center;color:var(--text2);background:var(--surface2);transition:all 0.15s;user-select:none;}
+.theme-btn{flex:1;padding:5px 0;border-radius:6px;border:1.5px solid var(--border);cursor:pointer;font-size:10.5px;font-family:'DM Mono',monospace;text-align:center;color:var(--text2);background:var(--surface2);transition:all 0.15s;user-select:none;}
 .theme-btn:hover{border-color:var(--accent);color:var(--accent);}
 .theme-btn.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent);}
 .main{flex:1;min-width:0;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
 .topbar{width:100%;height:52px;min-height:52px;max-height:52px;flex:0 0 52px;background:var(--topbar-bg);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 28px;display:flex;align-items:center;justify-content:space-between;gap:12px;z-index:20;overflow:hidden;}
-.topbar-title{font-family:'Bricolage Grotesque',sans-serif;font-size:13.5px;font-weight:700;white-space:nowrap;flex-shrink:0;}
+.topbar-title{font-family:'Syne',sans-serif;font-size:13.5px;font-weight:700;white-space:nowrap;flex-shrink:0;}
 .topbar-actions{display:flex;gap:6px;align-items:center;flex-shrink:0;}
 .btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;border:none;transition:all 0.15s;font-family:'DM Sans',sans-serif;white-space:nowrap;}
 .btn-ghost{background:var(--surface2);color:var(--text2);border:1px solid var(--border);}
@@ -58,7 +58,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .btn-primary:hover{background:var(--accent2);transform:translateY(-1px);}
 .content-area{flex:1;overflow-y:auto;overflow-x:hidden;min-height:0;}
 .content{padding:32px;}
-.section-title{font-family:'Bricolage Grotesque',sans-serif;font-size:22px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px;}
+.section-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px;}
 .section-sub{font-size:12.5px;color:var(--text2);margin-bottom:22px;}
 .tabs{display:flex;gap:2px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:3px;width:fit-content;margin-bottom:20px;}
 .tab{padding:6px 15px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;color:var(--text2);transition:all 0.15s;user-select:none;white-space:nowrap;}
@@ -67,16 +67,16 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
 .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px;transition:border-color 0.2s;min-width:0;}
 .stat-card:hover{border-color:var(--border2);}
-.stat-label{font-family:'Geist Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:7px;}
-.stat-value{font-family:'Bricolage Grotesque',sans-serif;font-size:30px;font-weight:800;letter-spacing:-1px;line-height:1;margin-bottom:4px;}
+.stat-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:7px;}
+.stat-value{font-family:'Syne',sans-serif;font-size:30px;font-weight:800;letter-spacing:-1px;line-height:1;margin-bottom:4px;}
 .stat-sub{font-size:11px;color:var(--text3);}
 .stat-bar{margin-top:12px;height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
 .stat-fill{height:100%;border-radius:2px;transition:width 0.6s ease;}
 .grid-dash{display:grid;grid-template-columns:3fr 2fr;gap:18px;margin-bottom:20px;}
 .panel{background:var(--surface);border:1px solid var(--border);border-radius:13px;overflow:hidden;min-width:0;}
 .panel-header{display:flex;align-items:center;justify-content:space-between;padding:13px 17px;border-bottom:1px solid var(--border);}
-.panel-title{font-family:'Bricolage Grotesque',sans-serif;font-size:12px;font-weight:700;}
-.panel-badge{font-family:'Geist Mono',monospace;font-size:9.5px;padding:2px 7px;border-radius:20px;background:var(--surface2);color:var(--text2);}
+.panel-title{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;}
+.panel-badge{font-family:'DM Mono',monospace;font-size:9.5px;padding:2px 7px;border-radius:20px;background:var(--surface2);color:var(--text2);}
 .task-item{display:flex;align-items:flex-start;gap:10px;padding:10px 17px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.1s;}
 .task-item:last-child{border-bottom:none;}
 .task-item:hover{background:var(--surface2);}
@@ -88,21 +88,21 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .task-name.done{text-decoration:line-through;color:var(--text3);}
 .task-meta{display:flex;gap:5px;align-items:center;flex-wrap:wrap;}
 .task-right{flex-shrink:0;margin-left:auto;}
-.task-due{font-family:'Geist Mono',monospace;font-size:10px;color:var(--text3);}
+.task-due{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);}
 .task-due.overdue{color:var(--rose);}
-.tag{font-family:'Geist Mono',monospace;font-size:9px;font-weight:500;padding:2px 6px;border-radius:5px;}
+.tag{font-family:'DM Mono',monospace;font-size:9px;font-weight:500;padding:2px 6px;border-radius:5px;}
 .priority-high{background:color-mix(in srgb,var(--rose) 12%,transparent);color:var(--rose);}
 .priority-med{background:color-mix(in srgb,var(--amber) 12%,transparent);color:var(--amber);}
 .priority-low{background:color-mix(in srgb,var(--green) 12%,transparent);color:var(--green);}
-.proj-tag{font-family:'Geist Mono',monospace;font-size:9px;padding:2px 6px;border-radius:5px;}
+.proj-tag{font-family:'DM Mono',monospace;font-size:9px;padding:2px 6px;border-radius:5px;}
 .subtask-progress{display:flex;align-items:center;gap:6px;margin-top:3px;}
 .subtask-bar{height:2px;background:var(--border);border-radius:1px;overflow:hidden;flex:1;max-width:60px;}
 .subtask-bar-fill{height:100%;background:var(--green);border-radius:1px;transition:width 0.3s ease;}
-.subtask-count-label{font-family:'Geist Mono',monospace;font-size:9px;color:var(--text3);}
+.subtask-count-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);}
 .time-block{display:flex;gap:9px;align-items:stretch;padding:10px 17px;border-bottom:1px solid var(--border);cursor:pointer;}
 .time-block:last-child{border-bottom:none;}
 .time-block:hover .time-bar{filter:brightness(1.08);}
-.time-label{font-family:'Geist Mono',monospace;font-size:10px;color:var(--text3);width:38px;flex-shrink:0;padding-top:3px;}
+.time-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);width:38px;flex-shrink:0;padding-top:3px;}
 .time-bar-wrap{flex:1;display:flex;align-items:center;gap:8px;}
 .time-bar{flex:1;border-radius:8px;padding:8px 12px;}
 .tb-purple{background:color-mix(in srgb,var(--accent) 18%,transparent);border-left:3px solid var(--accent);}
@@ -123,26 +123,26 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .update-title{font-size:12.5px;font-weight:500;margin-bottom:2px;}
 .update-text{font-size:11.5px;color:var(--text2);margin-bottom:5px;}
 .update-meta{display:flex;gap:7px;align-items:center;flex-wrap:wrap;}
-.update-time{font-family:'Geist Mono',monospace;font-size:9.5px;color:var(--text3);}
+.update-time{font-family:'DM Mono',monospace;font-size:9.5px;color:var(--text3);}
 .week-nav{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
 .week-arrow{width:28px;height:28px;border-radius:7px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:var(--text2);}
 .week-arrow:hover{color:var(--text);border-color:var(--border2);}
-.week-label{font-family:'Geist Mono',monospace;font-size:11px;color:var(--text2);flex:1;}
+.week-label{font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);flex:1;}
 .day-tabs{display:flex;gap:5px;overflow-x:auto;margin-bottom:16px;padding-bottom:2px;scrollbar-width:none;}
 .day-tabs::-webkit-scrollbar{display:none;}
 .day-tab{flex-shrink:0;padding:7px 12px;border-radius:9px;border:1.5px solid var(--border);background:var(--surface);cursor:pointer;text-align:center;min-width:52px;transition:all 0.15s;}
 .day-tab.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);}
-.day-tab-name{font-family:'Geist Mono',monospace;font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;}
-.grp-btn{padding:4px 10px;border-radius:6px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:0.5px;text-transform:uppercase;color:var(--text3);cursor:pointer;transition:all 0.15s;}
+.day-tab-name{font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;}
+.grp-btn{padding:4px 10px;border-radius:6px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.5px;text-transform:uppercase;color:var(--text3);cursor:pointer;transition:all 0.15s;}
 .grp-btn.active{background:var(--accent);color:#fff;}
 .grp-btn:hover:not(.active){background:var(--border2);color:var(--text);}
 .task-group-header{padding:10px 17px 4px;display:flex;align-items:center;gap:7px;border-bottom:1px solid var(--border);background:var(--surface2);}
-.task-group-label{font-family:'Geist Mono',monospace;font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);}
-.task-group-count{font-family:'Geist Mono',monospace;font-size:9px;color:var(--text3);margin-left:auto;}
+.task-group-label{font-family:'DM Mono',monospace;font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);}
+.task-group-count{font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);margin-left:auto;}
 .task-folder-header{padding:8px 17px 4px;display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--border);background:var(--surface);}
-.task-folder-name{font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);}
+.task-folder-name{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);}
 .day-tab.active .day-tab-name{color:var(--accent);}
-.day-tab-date{font-family:'Bricolage Grotesque',sans-serif;font-size:15px;font-weight:800;color:var(--text);margin-top:2px;}
+.day-tab-date{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:var(--text);margin-top:2px;}
 .day-tab.active .day-tab-date{color:var(--accent);}
 .day-tab-dot{width:3px;height:3px;border-radius:50%;background:var(--accent);margin:3px auto 0;opacity:0;}
 .day-tab.has-blocks .day-tab-dot{opacity:1;}
@@ -152,8 +152,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .folder-section-header{display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:14px 18px;background:var(--surface);border:1px solid var(--border);border-radius:12px;cursor:pointer;user-select:none;min-height:52px;}
 .folder-section-header:hover{border-color:var(--border2);}
 .folder-section-arrow{font-size:14px;color:var(--text3);transition:transform 0.18s;flex-shrink:0;}
-.folder-section-name{font-family:'Bricolage Grotesque',sans-serif;font-size:15px;font-weight:800;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.folder-section-count{font-family:'Geist Mono',monospace;font-size:10px;color:var(--text3);background:var(--surface2);padding:2px 8px;border-radius:20px;}
+.folder-section-name{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.folder-section-count{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);background:var(--surface2);padding:2px 8px;border-radius:20px;}
 .folder-section-actions{display:flex;gap:6px;margin-left:auto;}
 .folder-action-btn{font-size:11px;color:var(--text3);padding:2px 8px;border-radius:5px;border:1px solid transparent;cursor:pointer;transition:all 0.12s;}
 .folder-action-btn:hover{background:var(--surface2);color:var(--text);border-color:var(--border);}
@@ -162,11 +162,11 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .proj-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,0,0,0.12);}
 .proj-card-top{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
 .proj-icon{font-size:22px;}
-.proj-name{font-family:'Bricolage Grotesque',sans-serif;font-size:16px;font-weight:800;line-height:1.2;}
+.proj-name{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;line-height:1.2;}
 .proj-desc{font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6;min-height:20px;}
 .proj-progress-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:10px;}
 .proj-progress-fill{height:100%;border-radius:2px;transition:width 0.5s;}
-.proj-meta{display:flex;justify-content:space-between;font-family:'Geist Mono',monospace;font-size:10.5px;color:var(--text3);margin-top:auto;}
+.proj-meta{display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:10.5px;color:var(--text3);margin-top:auto;}
 .proj-card-actions{position:absolute;top:12px;right:12px;display:flex;gap:4px;opacity:0;transition:opacity 0.15s;}
 .proj-card:hover .proj-card-actions{opacity:1;}
 .proj-card-btn{font-size:12px;color:var(--text3);padding:3px 7px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;transition:all 0.12s;}
@@ -175,12 +175,12 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .sug-card{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:13px 16px;display:flex;align-items:flex-start;gap:12px;cursor:pointer;transition:all 0.18s;position:relative;overflow:hidden;margin-bottom:10px;}
 .sug-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:3px 0 0 3px;}
 .sug-card:hover{border-color:var(--border2);transform:translateY(-1px);box-shadow:0 4px 20px rgba(0,0,0,0.15);}
-.sug-reason{font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:0.8px;text-transform:uppercase;font-weight:600;margin-bottom:4px;opacity:0.8;}
+.sug-reason{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.8px;text-transform:uppercase;font-weight:600;margin-bottom:4px;opacity:0.8;}
 .sug-name{font-size:13px;font-weight:600;margin-bottom:5px;color:var(--text);}
 .sug-meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
 .sug-action{margin-left:auto;flex-shrink:0;background:var(--surface2);border:1px solid var(--border2);border-radius:7px;padding:6px 11px;font-size:11px;font-weight:500;color:var(--text2);cursor:pointer;white-space:nowrap;transition:all 0.15s;font-family:'DM Sans',sans-serif;}
 .sug-action:hover{background:var(--accent);color:white;border-color:var(--accent);}
-.sug-days{font-family:'Geist Mono',monospace;font-size:10px;color:var(--text3);margin-top:5px;}
+.sug-days{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);margin-top:5px;}
 .sug-days span{color:var(--accent);text-decoration:underline;text-decoration-style:dashed;cursor:pointer;margin:0 2px;}
 .empty-block{text-align:center;padding:24px 16px;color:var(--text3);font-size:12px;}
 .tab-view{display:none;}
@@ -189,17 +189,17 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .proj-detail-header{display:flex;align-items:flex-start;gap:16px;margin-bottom:28px;padding:24px;background:var(--surface);border:1px solid var(--border);border-radius:16px;}
 .proj-detail-icon{font-size:36px;flex-shrink:0;}
 .proj-detail-info{flex:1;min-width:0;}
-.proj-detail-name{font-family:'Bricolage Grotesque',sans-serif;font-size:26px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px;}
+.proj-detail-name{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px;}
 .proj-detail-desc{font-size:13px;color:var(--text2);line-height:1.6;}
 .proj-detail-stats{display:flex;gap:20px;margin-top:12px;}
-.proj-detail-stat{font-family:'Geist Mono',monospace;font-size:10px;color:var(--text3);}
-.proj-detail-stat span{display:block;font-family:'Bricolage Grotesque',sans-serif;font-size:22px;font-weight:800;color:var(--text);margin-bottom:1px;}
+.proj-detail-stat{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);}
+.proj-detail-stat span{display:block;font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--text);margin-bottom:1px;}
 .proj-detail-actions{display:flex;gap:8px;flex-shrink:0;align-self:flex-start;}
 .proj-detail-progress{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:14px;}
 .proj-detail-progress-fill{height:100%;border-radius:3px;transition:width 0.6s;}
 /* ── Folder Detail View ── */
 .folder-detail-header{display:flex;align-items:center;gap:12px;margin-bottom:24px;}
-.folder-detail-name{font-family:'Bricolage Grotesque',sans-serif;font-size:26px;font-weight:800;}
+.folder-detail-name{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;}
 /* ── Sidebar drag states for folders ── */
 .sidebar-folder-header.drag-target{background:color-mix(in srgb,var(--accent) 18%,transparent);border:1px dashed var(--accent);border-radius:7px;}
 .sidebar-folder.dragging-folder{opacity:0.4;}
@@ -211,8 +211,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .drawer-close:hover{color:var(--text);}
 .drawer-scroll{flex:1;overflow-y:auto;padding:16px 18px;}
 .drawer-section{margin-bottom:16px;}
-.drawer-label{font-family:'Geist Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;}
-.drawer-title-input{width:100%;background:transparent;border:none;font-family:'Bricolage Grotesque',sans-serif;font-size:17px;font-weight:600;color:var(--text);outline:none;resize:none;line-height:1.35;padding:0;}
+.drawer-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;}
+.drawer-title-input{width:100%;background:transparent;border:none;font-family:'Syne',sans-serif;font-size:17px;font-weight:600;color:var(--text);outline:none;resize:none;line-height:1.35;padding:0;}
 .drawer-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 11px;font-size:12.5px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;}
 .drawer-input:focus{border-color:var(--accent);}
 .drawer-select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 11px;font-size:12.5px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;}
@@ -237,12 +237,12 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .modal-overlay.open{display:flex;}
 .modal{background:var(--surface);border:1px solid var(--border2);border-radius:14px;width:460px;max-width:calc(100vw - 40px);max-height:90vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,0.4);}
 .modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:1px solid var(--border);}
-.modal-title{font-family:'Bricolage Grotesque',sans-serif;font-size:14px;font-weight:700;}
+.modal-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;}
 .modal-close{color:var(--text3);cursor:pointer;font-size:18px;}
 .modal-close:hover{color:var(--text);}
 .modal-body{padding:16px 20px;display:flex;flex-direction:column;gap:12px;}
 .modal-footer{padding:12px 20px 16px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;}
-.field-label{font-family:'Geist Mono',monospace;font-size:9.5px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;}
+.field-label{font-family:'DM Mono',monospace;font-size:9.5px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;}
 .field-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;}
 .field-input:focus{border-color:var(--accent);}
 .field-select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;}
@@ -254,204 +254,10 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .color-swatch.active{border-color:var(--text);transform:scale(1.15);}
 .toast{position:fixed;bottom:20px;right:20px;background:var(--surface2);border:1px solid var(--border2);border-radius:9px;padding:9px 15px;font-size:12px;box-shadow:0 14px 36px rgba(0,0,0,0.3);z-index:200;transform:translateY(60px);opacity:0;transition:all 0.25s ease;display:flex;align-items:center;gap:7px;}
 .toast.show{transform:none;opacity:1;}
-.sync-status{font-family:'Geist Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:0.5px;}
-
-/* ══════════════════════════════════════════════════
-   NOTEPAD — integrated tab
-   ══════════════════════════════════════════════════ */
-.notepad-layout{display:flex;gap:0;height:100%;min-height:calc(100vh - 52px - 56px);}
-.np-compose-panel{
-  width:380px;flex-shrink:0;
-  border-right:1px solid var(--border);
-  display:flex;flex-direction:column;
-  background:linear-gradient(160deg,var(--surface) 0%,var(--bg) 100%);
-  backdrop-filter:blur(40px);
-}
-.np-compose-header{padding:18px 20px 13px;border-bottom:1px solid var(--border);flex-shrink:0;}
-.np-compose-header h2{font-family:'Bricolage Grotesque',sans-serif;font-size:14px;font-weight:800;letter-spacing:-0.3px;margin-bottom:2px;}
-.np-compose-header p{font-size:11px;color:var(--text3);}
-.np-compose-body{padding:16px 18px;flex:1;display:flex;flex-direction:column;gap:12px;overflow-y:auto;}
-.np-textarea{width:100%;min-height:130px;max-height:240px;background:var(--glass);border:1px solid var(--border);border-radius:12px;padding:13px 15px;font-size:13.5px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;resize:none;line-height:1.6;transition:border-color 0.15s,box-shadow 0.15s;}
-.np-textarea::placeholder{color:var(--text3);}
-.np-textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
-.np-tag-pills{display:flex;gap:5px;flex-wrap:wrap;}
-.np-tag-pill{padding:4px 11px;border-radius:20px;font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:0.3px;cursor:pointer;border:1.5px solid var(--border2);color:var(--text3);transition:all 0.14s;user-select:none;}
-.np-tag-pill.active{border-color:var(--accent);color:var(--accent);background:var(--accent-soft);}
-.np-pri-row{display:flex;gap:5px;}
-.np-pri-btn{flex:1;padding:6px 0;text-align:center;border-radius:8px;font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:0.4px;cursor:pointer;border:1.5px solid var(--border2);color:var(--text3);transition:all 0.14s;user-select:none;}
-.np-pri-btn.np-high{border-color:var(--rose);color:var(--rose);background:var(--rose-soft);}
-.np-pri-btn.np-med{border-color:var(--amber);color:var(--amber);background:var(--amber-soft);}
-.np-pri-btn.np-low{border-color:var(--green);color:var(--green);background:var(--green-soft);}
-.np-compose-footer{padding:12px 18px 18px;border-top:1px solid var(--border);flex-shrink:0;display:flex;gap:7px;}
-.np-notes-pane{flex:1;display:flex;flex-direction:column;overflow:hidden;}
-.np-notes-header{padding:12px 22px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;gap:8px;background:linear-gradient(90deg,var(--glass2) 0%,var(--glass) 100%);}
-.np-notes-title{font-family:'Bricolage Grotesque',sans-serif;font-size:13px;font-weight:700;}
-.np-notes-badge{font-family:'Geist Mono',monospace;font-size:9px;padding:2px 8px;border-radius:20px;background:var(--glass);color:var(--text3);border:1px solid var(--border);}
-.np-filter-row{display:flex;gap:2px;margin-left:auto;background:var(--glass);border:1px solid var(--border);border-radius:10px;padding:2px;}
-.np-filter-tab{padding:4px 11px;border-radius:7px;font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:0.4px;cursor:pointer;color:var(--text3);transition:all 0.13s;user-select:none;}
-.np-filter-tab.active{background:var(--surface3);color:var(--text);box-shadow:0 1px 5px rgba(0,0,0,0.25);}
-.np-notes-list{flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border2) transparent;}
-.np-notes-list::-webkit-scrollbar{width:4px;}
-.np-notes-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:10px;}
-.np-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;color:var(--text3);}
-.np-empty-icon{font-size:36px;opacity:0.35;}
-.np-empty-text{font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:0.8px;}
-.np-note-card{padding:13px 20px 12px 24px;border-bottom:1px solid var(--border);cursor:default;transition:background 0.12s;position:relative;}
-.np-note-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);border-radius:0 3px 3px 0;opacity:0;transition:opacity 0.13s;}
-.np-note-card:hover{background:var(--glass);}
-.np-note-card:hover::before{opacity:1;}
-.np-note-card.np-converted{opacity:0.52;}
-.np-note-card.np-converted::before{background:var(--green);opacity:1;}
-.np-card-top{display:flex;align-items:flex-start;gap:9px;margin-bottom:6px;}
-.np-note-text{flex:1;font-size:13px;line-height:1.5;color:var(--text);white-space:pre-wrap;word-break:break-word;}
-.np-note-text.np-strikethrough{text-decoration:line-through;color:var(--text3);}
-.np-card-actions{display:flex;gap:4px;flex-shrink:0;opacity:0;transition:opacity 0.13s;}
-.np-note-card:hover .np-card-actions{opacity:1;}
-.np-card-btn{padding:3px 8px;border-radius:6px;font-size:9.5px;font-family:'Geist Mono',monospace;cursor:pointer;border:1px solid var(--border);background:var(--glass);color:var(--text3);transition:all 0.12s;white-space:nowrap;}
-.np-card-btn:hover{color:var(--text);border-color:var(--border2);}
-.np-card-btn.np-to-task:hover{color:var(--accent);border-color:var(--accent);background:var(--accent-soft);}
-.np-card-btn.np-del:hover{color:var(--rose);border-color:var(--rose);}
-.np-card-meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
-.np-tag-badge{font-family:'Geist Mono',monospace;font-size:8px;padding:2px 7px;border-radius:4px;letter-spacing:0.4px;text-transform:uppercase;}
-.np-pri-label{font-family:'Geist Mono',monospace;font-size:8px;}
-.np-time-label{font-family:'Geist Mono',monospace;font-size:8px;color:var(--text3);margin-left:auto;}
-.np-converted-badge{font-family:'Geist Mono',monospace;font-size:8px;padding:2px 7px;border-radius:4px;background:var(--green-soft);color:var(--green);letter-spacing:0.4px;}
-.np-proj-wrap{position:relative;}
-.np-proj-trigger{display:flex;align-items:center;gap:8px;width:100%;background:var(--glass);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:13px;color:var(--text);cursor:pointer;transition:border-color 0.15s,box-shadow 0.15s;user-select:none;}
-.np-proj-trigger:hover{border-color:var(--border2);}
-.np-proj-trigger.open{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
-.np-proj-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
-.np-proj-val{flex:1;font-size:13px;}
-.np-proj-arrow{font-size:10px;color:var(--text3);transition:transform 0.18s;flex-shrink:0;}
-.np-proj-trigger.open .np-proj-arrow{transform:rotate(180deg);}
-.np-proj-dropdown{position:absolute;top:calc(100% + 5px);left:0;right:0;z-index:60;background:var(--surface2);border:1px solid var(--border2);border-radius:12px;box-shadow:0 16px 48px rgba(0,0,0,0.5);display:none;max-height:200px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border2) transparent;backdrop-filter:blur(24px);}
-.np-proj-dropdown.open{display:block;}
-.np-proj-option{display:flex;align-items:center;gap:10px;padding:9px 13px;cursor:pointer;font-size:13px;color:var(--text2);transition:background 0.11s;}
-.np-proj-option:hover{background:var(--glass2);color:var(--text);}
-.np-proj-option.np-selected{background:var(--accent-soft);color:var(--accent);}
-.np-proj-add-opt{border-top:1px solid var(--border);padding-top:9px;}
-.np-color-swatch{width:20px;height:20px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all 0.14s;flex-shrink:0;}
-.np-color-swatch.active{border-color:var(--text);transform:scale(1.2);}
-.np-color-swatch:hover:not(.active){transform:scale(1.1);}
-
-/* ── LAUNCHER ── */
-.launcher{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.35s,transform 0.35s;}
-.launcher.hidden{opacity:0;pointer-events:none;transform:scale(0.96);}
-.launcher-eyebrow{font-family:'Geist Mono',monospace;font-size:9px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:var(--text3);margin-bottom:52px;}
-.launcher-grid{display:flex;gap:52px;align-items:flex-start;justify-content:center;}
-.launcher-app{display:flex;flex-direction:column;align-items:center;gap:14px;cursor:pointer;}
-.launcher-icon{width:88px;height:88px;border-radius:22px;display:flex;align-items:center;justify-content:center;font-size:36px;transition:transform 0.2s cubic-bezier(0.4,0,0.2,1),box-shadow 0.2s;border:1px solid var(--border2);}
-.launcher-icon:hover{transform:translateY(-5px) scale(1.05);}
-.launcher-icon.cc{background:linear-gradient(140deg,var(--accent) 0%,var(--violet) 100%);box-shadow:0 8px 28px var(--accent-glow),inset 0 1px 0 rgba(255,255,255,0.18);}
-.launcher-icon.np{background:linear-gradient(140deg,var(--green) 0%,var(--sky) 100%);box-shadow:0 8px 28px rgba(0,229,160,0.25),inset 0 1px 0 rgba(255,255,255,0.18);}
-.launcher-label{font-family:'Geist Mono',monospace;font-size:10px;color:var(--text2);letter-spacing:1px;text-align:center;text-transform:uppercase;}
-
-/* ── STANDALONE NOTEPAD ── */
-.np-standalone{position:fixed;inset:0;z-index:100;background:var(--bg);display:none;flex-direction:column;}
-.np-standalone-topbar{height:52px;flex-shrink:0;background:var(--topbar-bg);backdrop-filter:blur(32px) saturate(1.8);border-bottom:1px solid var(--border);padding:0 20px;display:flex;align-items:center;gap:12px;position:relative;}
-.np-standalone-topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--green) 40%,var(--sky) 100%);opacity:0.3;}
-.np-standalone-body{flex:1;display:flex;overflow:hidden;}
-
-/* Mobile notepad stacking */
-@media (max-width:600px){
-  .notepad-layout{flex-direction:column;height:auto;min-height:auto;}
-  .np-compose-panel{width:100%;border-right:none;border-bottom:1px solid var(--border);}
-  .np-notes-pane{min-height:280px;}
-  .np-notes-header{flex-wrap:wrap;gap:6px;padding:10px 13px;}
-  .np-filter-row{margin-left:0;order:3;width:100%;}
-}
-
-
-
-/* ── RESTORE BANNER ── */
-#restore-banner{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:5000;background:var(--accent);color:white;border-radius:14px;padding:14px 24px;display:none;align-items:center;gap:12px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;box-shadow:0 8px 32px rgba(123,104,255,0.5);white-space:nowrap;}
-#restore-banner .rb-spin{width:16px;height:16px;border:2px solid rgba(255,255,255,0.4);border-top-color:white;border-radius:50%;animation:rbspin 0.7s linear infinite;}
-@keyframes rbspin{to{transform:rotate(360deg);}}
-
+.sync-status{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:0.5px;}
 </style>
 </head>
 <body data-theme="dark">
-<!-- LAUNCHER -->
-<div class="launcher" id="launcher">
-  <div class="launcher-eyebrow">Command Center Suite</div>
-  <div class="launcher-grid">
-    <div class="launcher-app" onclick="openApp('cc')">
-      <div class="launcher-icon cc">⚡</div>
-      <div class="launcher-label">Command Center</div>
-    </div>
-    <div class="launcher-app" onclick="openApp('np')">
-      <div class="launcher-icon np">📝</div>
-      <div class="launcher-label">Notepad</div>
-    </div>
-  </div>
-</div>
-
-<!-- STANDALONE NOTEPAD -->
-<div class="np-standalone" id="np-standalone">
-  <div class="np-standalone-topbar">
-    <div onclick="goHome()" style="cursor:pointer;width:28px;height:28px;border-radius:8px;background:var(--glass);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text2);transition:all 0.15s;flex-shrink:0;" title="Home">⌂</div>
-    <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:13px;font-weight:800;">Notepad</div>
-    <div style="flex:1;"></div>
-  </div>
-  <div class="np-standalone-body">
-    <!-- Compose panel — identical to in-app notepad -->
-    <div class="np-compose-panel">
-      <div class="np-compose-header">
-        <h2>✦ Quick Note</h2>
-        <p>Jot anything — convert to a task in one click</p>
-      </div>
-      <div class="np-compose-body">
-        <div>
-          <textarea class="np-textarea" id="np-input-sa" placeholder="What's on your mind? An idea, reminder, or something to do…" rows="5"></textarea>
-        </div>
-        <div>
-          <div class="field-label">Category</div>
-          <div class="np-tag-pills" id="np-sa-tags">
-            <div class="np-tag-pill active" data-tag="general" onclick="npSaSelectTag(this)">General</div>
-            <div class="np-tag-pill" data-tag="clinical" onclick="npSaSelectTag(this)">Clinical</div>
-            <div class="np-tag-pill" data-tag="clinisynq" onclick="npSaSelectTag(this)">Clinisynq</div>
-            <div class="np-tag-pill" data-tag="research" onclick="npSaSelectTag(this)">Research</div>
-            <div class="np-tag-pill" data-tag="personal" onclick="npSaSelectTag(this)">Personal</div>
-            <div class="np-tag-pill" data-tag="idea" onclick="npSaSelectTag(this)">Idea 💡</div>
-          </div>
-        </div>
-        <div>
-          <div class="field-label">Priority</div>
-          <div class="np-pri-row" id="np-sa-pri">
-            <div class="np-pri-btn" data-pri="high" onclick="npSaSelectPri(this)">▲ High</div>
-            <div class="np-pri-btn np-med" data-pri="med" onclick="npSaSelectPri(this)">◆ Med</div>
-            <div class="np-pri-btn" data-pri="low" onclick="npSaSelectPri(this)">▼ Low</div>
-          </div>
-        </div>
-      </div>
-      <div class="np-compose-footer">
-        <button class="btn btn-ghost" onclick="npSaClearForm()">Clear</button>
-        <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="npSaSaveNote()">⊕ Save Note</button>
-      </div>
-    </div>
-    <!-- Notes list — identical to in-app notepad -->
-    <div class="np-notes-pane">
-      <div class="np-notes-header">
-        <span class="np-notes-title">◈ My Notes</span>
-        <span class="np-notes-badge" id="np-sa-count">0 notes</span>
-        <div class="np-filter-row">
-          <div class="np-filter-tab active" onclick="npSaSetFilter('all',this)">All</div>
-          <div class="np-filter-tab" onclick="npSaSetFilter('pending',this)">Pending</div>
-          <div class="np-filter-tab" onclick="npSaSetFilter('converted',this)">Converted</div>
-        </div>
-      </div>
-      <div class="np-notes-list" id="np-sa-notes-list">
-        <div class="np-empty">
-          <div class="np-empty-icon">📝</div>
-          <div class="np-empty-text">No notes yet — jot one!</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div id="restore-banner"><div class="rb-spin"></div><span>Restoring your data from cloud…</span></div>
-<div id="cc-debug" style="display:none;position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:9999;background:#1a1a2e;border:2px solid #7b68ff;color:#e2e8f0;padding:16px 20px;border-radius:12px;font-family:monospace;font-size:12px;max-width:90vw;line-height:1.8;white-space:pre-wrap;box-shadow:0 8px 32px rgba(0,0,0,0.6);"></div>
 <div class="shell">
   <aside class="sidebar">
     <div class="sidebar-header">
@@ -464,7 +270,6 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <div class="nav-item" onclick="switchTab('tasks',this)"><span class="icon">✦</span>All Tasks</div>
       <div class="nav-item" onclick="switchTab('timeblock',this)"><span class="icon">◷</span>Time Blocks</div>
       <div class="nav-item" onclick="switchTab('projects',this)"><span class="icon">◎</span>Projects</div>
-      <div class="nav-item" onclick="switchTab('notepad',this)"><span class="icon">📝</span>Notepad</div>
       <div class="nav-item" onclick="switchTab('updates',this)"><span class="icon">↑</span>Updates Log</div>
     </div>
     <div class="sidebar-section">
@@ -498,8 +303,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         <div class="theme-btn" onclick="setTheme('warm',this)">Warm</div>
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-        <span style="font-family:'Geist Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;">Notifications</span>
-        <button onclick="toggleNotifSettings()" id="notif-toggle-btn" style="font-family:'Geist Mono',monospace;font-size:9px;padding:2px 8px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;">On</button>
+        <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;">Notifications</span>
+        <button onclick="toggleNotifSettings()" id="notif-toggle-btn" style="font-family:'DM Mono',monospace;font-size:9px;padding:2px 8px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;">On</button>
       </div>
       <div class="sync-status" id="sync-status">◌ Offline</div>
     </div>
@@ -507,7 +312,6 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
   <div class="main">
     <div class="topbar">
-      <div onclick="goHome()" style="cursor:pointer;width:28px;height:28px;border-radius:8px;background:var(--glass);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text2);transition:all 0.15s;flex-shrink:0;" title="Home">⌂</div>
       <div class="topbar-title" id="topbar-title">Dashboard</div>
       <div class="topbar-actions">
         <button class="btn btn-ghost" onclick="openTimeBlockModal()">◷ Time Block</button>
@@ -520,7 +324,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
         <!-- DASHBOARD -->
         <div class="tab-view active" id="tab-dashboard">
-          <div id="dash-greeting" style="font-family:'Bricolage Grotesque',sans-serif;font-size:26px;font-weight:800;letter-spacing:-0.5px;margin-bottom:5px;"></div>
+          <div id="dash-greeting" style="font-family:'Syne',sans-serif;font-size:26px;font-weight:800;letter-spacing:-0.5px;margin-bottom:5px;"></div>
           <div id="dash-sub" style="font-size:13px;color:var(--text2);margin-bottom:26px;"></div>
           <div class="stats-row">
             <div class="stat-card"><div class="stat-label">Total Tasks</div><div class="stat-value" id="stat-total" style="color:var(--accent)">—</div><div class="stat-sub">all projects</div><div class="stat-bar"><div class="stat-fill" id="fill-total" style="background:var(--accent);width:0%"></div></div></div>
@@ -610,67 +414,6 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         <!-- FOLDER DETAIL -->
         <div class="tab-view" id="tab-folder-detail">
           <div id="folder-detail-content"></div>
-        </div>
-
-
-        <!-- NOTEPAD -->
-        <div class="tab-view" id="tab-notepad">
-          <div class="notepad-layout">
-            <!-- LEFT: Compose -->
-            <div class="np-compose-panel">
-              <div class="np-compose-header">
-                <h2>✦ Quick Note</h2>
-                <p>Jot anything — convert to a task in one click</p>
-              </div>
-              <div class="np-compose-body">
-                <div>
-                  <textarea class="np-textarea" id="np-input" placeholder="What's on your mind? An idea, reminder, or something to do…" rows="5"></textarea>
-                </div>
-                <div>
-                  <div class="field-label">Category</div>
-                  <div class="np-tag-pills">
-                    <div class="np-tag-pill active" data-tag="general" onclick="npSelectTag(this)">General</div>
-                    <div class="np-tag-pill" data-tag="clinical" onclick="npSelectTag(this)">Clinical</div>
-                    <div class="np-tag-pill" data-tag="clinisynq" onclick="npSelectTag(this)">Clinisynq</div>
-                    <div class="np-tag-pill" data-tag="research" onclick="npSelectTag(this)">Research</div>
-                    <div class="np-tag-pill" data-tag="personal" onclick="npSelectTag(this)">Personal</div>
-                    <div class="np-tag-pill" data-tag="idea" onclick="npSelectTag(this)">Idea 💡</div>
-                  </div>
-                </div>
-                <div>
-                  <div class="field-label">Priority</div>
-                  <div class="np-pri-row">
-                    <div class="np-pri-btn" data-pri="high" onclick="npSelectPri(this)">▲ High</div>
-                    <div class="np-pri-btn np-med" data-pri="med" onclick="npSelectPri(this)">◆ Med</div>
-                    <div class="np-pri-btn" data-pri="low" onclick="npSelectPri(this)">▼ Low</div>
-                  </div>
-                </div>
-              </div>
-              <div class="np-compose-footer">
-                <button class="btn btn-ghost" onclick="npClearForm()">Clear</button>
-                <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="npSaveNote()">⊕ Save Note</button>
-              </div>
-            </div>
-
-            <!-- RIGHT: Notes list -->
-            <div class="np-notes-pane">
-              <div class="np-notes-header">
-                <span class="np-notes-title">◈ My Notes</span>
-                <span class="np-notes-badge" id="np-count">0 notes</span>
-                <div class="np-filter-row">
-                  <div class="np-filter-tab active" onclick="npSetFilter('all',this)">All</div>
-                  <div class="np-filter-tab" onclick="npSetFilter('pending',this)">Pending</div>
-                  <div class="np-filter-tab" onclick="npSetFilter('converted',this)">Converted</div>
-                </div>
-              </div>
-              <div class="np-notes-list" id="np-notes-list">
-                <div class="np-empty">
-                  <div class="np-empty-icon">📝</div>
-                  <div class="np-empty-text">No notes yet — jot one!</div>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
         <!-- UPDATES LOG -->
@@ -912,84 +655,6 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   </div>
 </div>
 
-<!-- NOTEPAD: CONVERT TO TASK MODAL -->
-<div class="modal-overlay" id="np-convert-modal">
-  <div class="modal">
-    <div class="modal-header">
-      <div class="modal-title">⊕ Convert Note → Task</div>
-      <span class="modal-close" onclick="npCloseConvert()">×</span>
-    </div>
-    <div class="modal-body">
-      <div>
-        <div class="field-label">Task Name *</div>
-        <input class="field-input" id="np-conv-name" placeholder="Task name…">
-      </div>
-      <div class="field-row">
-        <div>
-          <div class="field-label">Project</div>
-          <div class="np-proj-wrap" id="np-proj-wrap">
-            <div class="np-proj-trigger" id="np-proj-trigger" onclick="npToggleProjDd()">
-              <span class="np-proj-dot" id="np-proj-dot" style="background:var(--border2)"></span>
-              <span class="np-proj-val" id="np-proj-val">— No Project —</span>
-              <span class="np-proj-arrow">▾</span>
-            </div>
-            <div class="np-proj-dropdown" id="np-proj-dd">
-              <div class="np-proj-option" onclick="npPickProj(\'\',\'\')">
-                <span style="width:8px;height:8px;border-radius:50%;background:var(--border2);display:inline-block;flex-shrink:0;"></span>
-                <span>— No Project —</span>
-              </div>
-              <div id="np-proj-dd-list"></div>
-              <div class="np-proj-option np-proj-add-opt" onclick="npShowNewProj()">
-                <span style="font-size:12px;color:var(--accent)">＋</span>
-                <span style="color:var(--accent)">New Project…</span>
-              </div>
-            </div>
-          </div>
-          <input type="hidden" id="np-conv-project" value="">
-          <div id="np-new-proj-panel" style="display:none;margin-top:8px;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:11px;flex-direction:column;gap:8px;">
-            <input class="field-input" id="np-new-proj-name" placeholder="Project name…" style="font-size:12.5px;padding:7px 11px;"
-              onkeydown="if(event.key===\'Enter\')npCreateProj();if(event.key===\'Escape\')npHideNewProj();">
-            <div>
-              <div class="field-label" style="margin-bottom:6px;">Color</div>
-              <div style="display:flex;gap:6px;flex-wrap:wrap;" id="np-new-proj-colors"></div>
-            </div>
-            <div style="display:flex;gap:6px;">
-              <button class="btn btn-ghost" onclick="npHideNewProj()" style="flex:1;font-size:11px;padding:4px 8px;">Cancel</button>
-              <button class="btn btn-primary" onclick="npCreateProj()" style="flex:1;font-size:11px;padding:4px 8px;">Create ✦</button>
-            </div>
-          </div>
-        </div>
-        <div>
-          <div class="field-label">Due Date</div>
-          <input class="field-input" id="np-conv-due" type="date">
-        </div>
-      </div>
-      <div class="field-row">
-        <div>
-          <div class="field-label">Priority</div>
-          <select class="field-select" id="np-conv-priority">
-            <option value="high">🔴 High</option>
-            <option value="med" selected>🟡 Medium</option>
-            <option value="low">🟢 Low</option>
-          </select>
-        </div>
-        <div>
-          <div class="field-label">Status</div>
-          <select class="field-select" id="np-conv-status">
-            <option value="todo" selected>To Do</option>
-            <option value="inprog">In Progress</option>
-          </select>
-        </div>
-      </div>
-      <div style="background:var(--glass);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:12px;color:var(--text2);line-height:1.5;max-height:70px;overflow-y:auto;" id="np-conv-preview"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="npCloseConvert()">Cancel</button>
-      <button class="btn btn-primary" onclick="npDoConvert()">✦ Create Task</button>
-    </div>
-  </div>
-</div>
-
 <div class="toast" id="toast"><span id="toast-icon">✦</span><span id="toast-msg">Done!</span></div>
 
 <script>
@@ -1062,147 +727,48 @@ function setSyncStatus(s){
   const st={syncing:{t:'⟳ Syncing…',c:'var(--amber)'},synced:{t:'✦ Synced',c:'var(--green)'},offline:{t:'◌ Offline',c:'var(--text3)'},saving:{t:'⟳ Saving…',c:'var(--accent)'}};
   const v=st[s]||st.offline;if(el){el.textContent=v.t;el.style.color=v.c;}
 }
-async // Track when we last pushed so we skip self-triggered pulls
-let lastPushAt = 0;
-let realtimeChannel = null;
-let pollTimer = null;
-
-function showRestoreBanner(){const b=document.getElementById('restore-banner');if(b)b.style.display='flex';}
-function hideRestoreBanner(){const b=document.getElementById('restore-banner');if(b)b.style.display='none';}
+let lastPushAt=0, realtimeChannel=null, pollTimer=null;
 
 async function initSupabase(){
-  // ── Step 1: Render from localStorage instantly ──
-  tasks    = JSON.parse(localStorage.getItem('cc_tasks')   ||'[]');
-  timeBlocks = JSON.parse(localStorage.getItem('cc_tb')    ||'[]');
-  updates  = JSON.parse(localStorage.getItem('cc_updates') ||'[]');
-  projects = JSON.parse(localStorage.getItem('cc_projects')||'null')||[];
-  npNotes  = JSON.parse(localStorage.getItem('np_notes_v2')||'[]');
-  runMigration(); render(); npRender(); npSaRender();
-  // If localStorage is empty, data lives in Supabase — show banner while restoring
-  if(tasks.length===0 && projects.length===0) showRestoreBanner();
+  // Render from localStorage immediately so app is never blank
+  tasks=JSON.parse(localStorage.getItem('cc_tasks')||'[]');
+  timeBlocks=JSON.parse(localStorage.getItem('cc_tb')||'[]');
+  updates=JSON.parse(localStorage.getItem('cc_updates')||'[]');
+  projects=JSON.parse(localStorage.getItem('cc_projects')||'null')||[];
+  runMigration(); render();
 
-  // ── Step 2: Connect to Supabase and pull fresh data in background ──
   try{
-    if(!window.supabase) throw new Error('Supabase library not loaded');
-    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    supabaseReady = true;
+    sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+    supabaseReady=true;
     setSyncStatus('syncing');
     await pullFromSupabase();
     setSyncStatus('synced');
-    hideRestoreBanner();
-    startRealtime();
-    startPolling();
-    document.addEventListener('visibilitychange', () => {
-      if(document.visibilityState === 'visible' && supabaseReady){
-        if(Date.now() - lastPushAt > 2000){
-          setSyncStatus('syncing');
-          pullFromSupabase().then(() => setSyncStatus('synced'));
-        }
+    // Re-pull when tab becomes visible (switching devices/apps)
+    document.addEventListener('visibilitychange',()=>{
+      if(document.visibilityState==='visible'&&supabaseReady&&Date.now()-lastPushAt>2000){
+        setSyncStatus('syncing');
+        pullFromSupabase().then(()=>setSyncStatus('synced'));
       }
     });
+    // Poll every 30s as fallback
+    pollTimer=setInterval(()=>{
+      if(supabaseReady&&document.hasFocus()&&Date.now()-lastPushAt>3000) pullFromSupabase();
+    },30000);
   }catch(e){
-    console.warn('Supabase init failed:', e);
-    const dbg = document.getElementById('cc-debug');
-    if(dbg){ dbg.innerHTML='<b>Init FAILED:</b> '+e.message+'<br>window.supabase exists: '+(!!window.supabase)+'<br>SUPABASE_URL: '+SUPABASE_URL.slice(0,40); dbg.style.display='block'; }
+    console.warn('Supabase init failed:',e);
     setSyncStatus('offline');
-    hideRestoreBanner();
-    setTimeout(retryConnection, 15000);
   }
-}
-
-async function retryConnection(){
-  if(supabaseReady) return;
-  try{
-    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    supabaseReady = true;
-    setSyncStatus('syncing');
-    await pullFromSupabase();
-    setSyncStatus('synced');
-    startRealtime();
-    startPolling();
-  }catch(e){
-    setTimeout(retryConnection, 15000);
-  }
-}
-
-function startRealtime(){
-  if(realtimeChannel) realtimeChannel.unsubscribe();
-
-  realtimeChannel = sb.channel('cc-sync')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, handleRemoteChange)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'time_blocks' }, handleRemoteChange)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'updates' }, handleRemoteChange)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, handleRemoteChange)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'notepad_notes' }, handleRemoteChange)
-    .subscribe();
-}
-
-function startPolling(){
-  if(pollTimer) clearInterval(pollTimer);
-  pollTimer = setInterval(async () => {
-    if(!supabaseReady || !document.hasFocus()) return;
-    const sinceLastPush = Date.now() - lastPushAt;
-    if(sinceLastPush < 3000) return; // skip if we just pushed
-    await pullFromSupabase();
-  }, 30000);
-}
-
-// Debounce remote changes so rapid bursts don't cause multiple pulls
-let remoteChangeTimer = null;
-function handleRemoteChange(payload){
-  const sinceLastPush = Date.now() - lastPushAt;
-  if(sinceLastPush < 2000) return; // this is our own push echoing back
-  clearTimeout(remoteChangeTimer);
-  remoteChangeTimer = setTimeout(async () => {
-    setSyncStatus('syncing');
-    await pullFromSupabase();
-    setSyncStatus('synced');
-  }, 300);
 }
 
 // ── PULL: Supabase is source of truth ──
 async function pullFromSupabase(){
   if(!supabaseReady)return;
-  // 8-second timeout so the loader never hangs forever
-  const timeout = new Promise((_,reject)=>setTimeout(()=>reject(new Error('pull_timeout')),15000));
-  let t,tb,u,pr,np=null;
-  try{
-    // Core data — notepad pulled separately so missing table never blocks tasks
-    [t,tb,u,pr]=await Promise.race([
-      Promise.all([
-        sb.from('tasks').select('*').order('created_at',{ascending:true}),
-        sb.from('time_blocks').select('*').order('created_at',{ascending:true}),
-        sb.from('updates').select('*').order('time',{ascending:false}),
-        sb.from('projects').select('*').order('sort_order',{ascending:true}),
-      ]),
-      timeout
-    ]);
-    try{ np=await sb.from('notepad_notes').select('*').order('created_at',{ascending:false}); }
-    catch(npErr){ np={error:{code:'fetch_failed'},data:null}; }
-  }catch(fetchErr){
-    console.warn('Supabase pull failed/timed out:',fetchErr.message);
-    const dbg = document.getElementById('cc-debug');
-    if(dbg){ dbg.innerHTML='<b>Pull FAILED:</b> '+fetchErr.message+'<br>supabaseReady: '+supabaseReady+'<br>window.supabase exists: '+(!!window.supabase); dbg.style.display='block'; }
-    // Fall back to localStorage so app still shows
-    tasks=JSON.parse(localStorage.getItem('cc_tasks')||'[]');
-    timeBlocks=JSON.parse(localStorage.getItem('cc_tb')||'[]');
-    updates=JSON.parse(localStorage.getItem('cc_updates')||'[]');
-    projects=JSON.parse(localStorage.getItem('cc_projects')||'null')||[];
-    npNotes=JSON.parse(localStorage.getItem('np_notes_v2')||'[]');
-    runMigration();render();npRender();npSaRender();
-    setSyncStatus('offline');
-    return;
-  }
-  // ── DEBUG: show what Supabase returned ──
-  const dbg = document.getElementById('cc-debug');
-  if(dbg){
-    const tInfo = t.error ? 'TASKS ERROR: '+JSON.stringify(t.error) : 'tasks: '+t.data.length+' rows';
-    const prInfo = pr.error ? 'PROJECTS ERROR: '+JSON.stringify(pr.error) : 'projects: '+pr.data.length+' rows';
-    const npInfo = np ? (np.error ? 'notepad ERROR: '+JSON.stringify(np.error) : 'notepad: '+np.data.length+' rows') : 'notepad: skipped';
-    dbg.innerHTML = '<b>Supabase pull result:</b><br>'+tInfo+'<br>'+prInfo+'<br>'+npInfo+'<br>supabaseReady: '+supabaseReady;
-    dbg.style.display = 'block';
-    setTimeout(()=>dbg.style.display='none', 12000);
-  }
+  const[t,tb,u,pr]=await Promise.all([
+    sb.from('tasks').select('*').order('created_at',{ascending:true}),
+    sb.from('time_blocks').select('*').order('created_at',{ascending:true}),
+    sb.from('updates').select('*').order('time',{ascending:false}),
+    sb.from('projects').select('*').order('sort_order',{ascending:true}),
+  ]);
   if(t.error){console.warn('tasks pull error:',t.error);}
   else{
     tasks=t.data.map(fromRow_task);
@@ -1212,17 +778,6 @@ async function pullFromSupabase(){
   else{
     timeBlocks=tb.data.map(fromRow_tb);
     localStorage.setItem('cc_tb',JSON.stringify(timeBlocks));
-  }
-  if(np&&!np.error&&np.data){
-    // Supabase is source of truth — trust it completely
-    // Do NOT merge local-only notes (they may have been deleted on another device)
-    npNotes=np.data.map(r=>({id:r.id,text:r.text,tag:r.tag||'general',
-      priority:r.priority||'med',converted:r.converted||false,
-      createdAt:r.created_at,taskId:r.task_id||null}))
-      .sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
-    localStorage.setItem('np_notes_v2',JSON.stringify(npNotes));
-  } else if(np&&np.error&&np.error.code==='42P01'){
-    console.warn('notepad_notes table not yet created in Supabase — notes stored locally only');
   }
   if(u.error){console.warn('updates pull error:',u.error);}
   else{
@@ -1245,14 +800,12 @@ async function pullFromSupabase(){
   }
   runMigration();
   render();
-  npRender();
-  npSaRender();
 }
 
 // ── PUSH: write everything to Supabase ──
 async function pushToSupabase(){
   if(!supabaseReady)return;
-  lastPushAt = Date.now(); // stamp before push so realtime echo is ignored
+  lastPushAt=Date.now();
   setSyncStatus('saving');
   try{
     // Pack folder structure into sentinel row so it syncs across devices
@@ -1265,8 +818,6 @@ async function pushToSupabase(){
       sb.from('time_blocks').upsert(timeBlocks.map(toRow_tb),{onConflict:'id'}),
       sb.from('updates').upsert(updates.map(toRow_update),{onConflict:'id'}),
       sb.from('projects').upsert(projRows,{onConflict:'name'}),
-      // notepad_notes intentionally excluded — each note op upserts/deletes directly
-      // to avoid stale-state resurrection from batch push
     ]);
     const errs=results.filter(r=>r.error);
     if(errs.length){console.warn('Push errors:',errs.map(r=>r.error));setSyncStatus('offline');}
@@ -1658,7 +1209,7 @@ function renderProjectDetail(projName){
   // Breadcrumb
   const folder=p.folder?`<span style="font-size:12px;color:var(--text3);cursor:pointer;" onclick="viewFolder('${p.folder}')">▸ ${p.folder}</span> <span style="color:var(--text3);">/ </span>`:'';
   let html=`
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;font-family:'Geist Mono',monospace;font-size:10px;color:var(--text3);">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);">
       <span style="cursor:pointer;" onclick="switchTab('projects',null)">Projects</span>
       <span>/</span>${folder}
       <span style="color:var(--text);">${projName}</span>
@@ -1688,8 +1239,8 @@ function renderProjectDetail(projName){
     html+=`<div style="margin-bottom:22px;">
       <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--surface2);border-radius:8px;margin-bottom:10px;">
         <span style="color:${s.color};font-size:11px;">${s.icon}</span>
-        <span style="font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);">${s.label}</span>
-        <span style="font-family:'Geist Mono',monospace;font-size:9px;color:var(--text3);margin-left:auto;">${list.length}</span>
+        <span style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);">${s.label}</span>
+        <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);margin-left:auto;">${list.length}</span>
       </div>
       <div class="panel" style="overflow:hidden;">${list.map(taskRow).join('')}</div>
     </div>`;
@@ -1718,7 +1269,7 @@ function renderFolderDetail(folderName){
   // Breadcrumb
   const breadcrumb=parentId?`<span style="cursor:pointer;" onclick="viewFolder('${parentId}')">${parentId}</span> <span>/</span> `:'';
   let html=`
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;font-family:'Geist Mono',monospace;font-size:10px;color:var(--text3);">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);">
       <span style="cursor:pointer;" onclick="switchTab('projects',null)">Projects</span>
       <span>/</span>${breadcrumb}
       <span style="color:var(--text);">${folderName}</span>
@@ -1735,13 +1286,13 @@ function renderFolderDetail(folderName){
   // Sub-folders
   if(subFolders.length){
     html+=`<div style="margin-bottom:24px;">
-      <div style="font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:12px;">Sub-folders</div>
+      <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:12px;">Sub-folders</div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;">
         ${subFolders.map(sf=>{
           const sfProjs=projects.filter(p=>p.folder===sf.id);
           return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:all 0.15s;" onclick="viewFolder('${sf.id}')" onmouseover="this.style.borderColor='var(--border2)'" onmouseout="this.style.borderColor='var(--border)'">
-            <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:14px;font-weight:700;margin-bottom:4px;">▸ ${sf.id}</div>
-            <div style="font-family:'Geist Mono',monospace;font-size:10px;color:var(--text3);">${sfProjs.length} projects</div>
+            <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-bottom:4px;">▸ ${sf.id}</div>
+            <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);">${sfProjs.length} projects</div>
           </div>`;
         }).join('')}
       </div>
@@ -1749,7 +1300,7 @@ function renderFolderDetail(folderName){
   }
   // Projects
   if(folderProjs.length){
-    html+=`<div style="font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:12px;">Projects</div>
+    html+=`<div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:12px;">Projects</div>
     <div class="projects-grid">`;
     folderProjs.forEach(p=>{
       const all=tasks.filter(t=>t.project===p.name),done=all.filter(t=>t.status==='done').length,pct=all.length?Math.round(done/all.length*100):0;
@@ -1889,7 +1440,7 @@ function renderGroupedByFolder(list){
       html+=`<div class="task-folder-header" style="padding-left:${17+indent}px;">
         <span style="color:var(--text3);font-size:10px;">▾</span>
         <span class="task-folder-name">${folder.id}</span>
-        <span style="font-family:'Geist Mono',monospace;font-size:9px;color:var(--text3);margin-left:auto;">${folderTasks.length}</span>
+        <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);margin-left:auto;">${folderTasks.length}</span>
       </div>`;
       // Projects in this folder
       folderProjs.forEach(proj=>{
@@ -1929,7 +1480,7 @@ function renderGroupedByFolder(list){
   // Tasks with no project at all
   const noProj=list.filter(t=>!t.project||!projects.find(p=>p.name===t.project));
   if(noProj.length){
-    html+=`<div class="task-folder-header"><span class="task-folder-name">No Project</span><span style="font-family:'Geist Mono',monospace;font-size:9px;color:var(--text3);margin-left:auto;">${noProj.length}</span></div>`;
+    html+=`<div class="task-folder-header"><span class="task-folder-name">No Project</span><span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);margin-left:auto;">${noProj.length}</span></div>`;
     html+=noProj.map(taskRow).join('');
   }
   return html||'<div class="empty-block">No tasks found.</div>';
@@ -2114,7 +1665,7 @@ function renderProjects(){
   let html=renderFolderSection(null,0);
   const ungrouped=projects.filter(p=>!p.folder);
   if(ungrouped.length){
-    if(getRootFolders().length) html+=`<div style="font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin:4px 0 12px;">Ungrouped</div>`;
+    if(getRootFolders().length) html+=`<div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin:4px 0 12px;">Ungrouped</div>`;
     html+=`<div class="projects-grid" style="margin-bottom:20px;">${ungrouped.map(makeCard).join('')}</div>`;
   }
   html+=`<div class="projects-grid"><div class="proj-card" onclick="openAddProject()" style="border-style:dashed;background:transparent;display:flex;align-items:center;justify-content:center;gap:10px;color:var(--text3);min-height:120px;flex-direction:column;">
@@ -2284,7 +1835,7 @@ function openDrawer(id){
     ?upd.map((u,i)=>{const text=typeof u==='string'?u:u.text;const ts=typeof u==='string'?null:u.time;
         return `<div style="padding:7px 0;border-bottom:1px solid var(--border);">
           <div style="display:flex;justify-content:space-between;gap:8px;"><span style="font-size:12px;color:var(--text2);">→ ${text}</span><span onclick="removeTaskUpdate('${id}',${i})" style="cursor:pointer;color:var(--text3);font-size:14px;">×</span></div>
-          <div style="font-family:'Geist Mono',monospace;font-size:9px;color:var(--text3);margin-top:2px;">${ts?fmtTimestamp(ts):'No timestamp'}</div>
+          <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);margin-top:2px;">${ts?fmtTimestamp(ts):'No timestamp'}</div>
         </div>`;}).join('')
     :`<div style="font-size:12px;color:var(--text3);font-style:italic">No updates yet.</div>`;
   document.getElementById('task-drawer').classList.add('open');
@@ -2513,366 +2064,7 @@ let toastTimer;
 function showToast(icon,msg){const t=document.getElementById('toast');document.getElementById('toast-icon').textContent=icon;document.getElementById('toast-msg').textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2500);}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelectorAll('.modal-overlay').forEach(o=>o.classList.remove('open'));closeDrawer();}});
 
-// ════════════════════════════════════════════════
-//  LAUNCHER
-// ════════════════════════════════════════════════
-function openApp(app){
-  const launcher=document.getElementById('launcher');
-  if(app==='cc'){
-    launcher.classList.add('hidden');
-  } else if(app==='np'){
-    launcher.classList.add('hidden');
-    const sa=document.getElementById('np-standalone');
-    sa.style.display='flex';
-    npRender();npSaRender();
-  }
-}
-function goHome(){
-  document.getElementById('np-standalone').style.display='none';
-  document.getElementById('launcher').classList.remove('hidden');
-}
-
-// ════════════════════════════════════════════════
-//  NOTEPAD — bulletproof storage layer
-// ════════════════════════════════════════════════
-const NP_LS_KEY = 'np_notes_v2';
-let npNotes = [];
-let npActiveTag = 'general';
-let npActivePri = 'med';
-let npActiveFilter = 'all';
-let npConvertingNote = null;
-let npSelProjName = '';
-let npSelProjColor = '';
-let npNewProjColor = PROJ_COLORS[0] || '#7b68ff';
-
-// Standalone state
-let npSaActiveTag = 'general';
-let npSaActivePri = 'med';
-let npSaActiveFilter = 'all';
-
-// ── Persistence: always write localStorage first, then sync to Supabase ──
-function npSaveAll() {
-  // Always persist to localStorage immediately
-  localStorage.setItem(NP_LS_KEY, JSON.stringify(npNotes));
-}
-
-async function npEnsureTable() {
-  // Try to create notepad_notes table if it doesn't exist
-  // Uses Supabase's REST API via a probe upsert then create
-  if (!supabaseReady) return false;
-  try {
-    const { error } = await sb.from('notepad_notes').select('id').limit(1);
-    if (!error) return true; // table exists
-    // Table missing — create it via SQL RPC if available, otherwise skip
-    return false;
-  } catch (e) { return false; }
-}
-
-async function npSyncToSupabase(note) {
-  if (!supabaseReady) return;
-  try {
-    const row = {
-      id: note.id,
-      text: note.text,
-      tag: note.tag || 'general',
-      priority: note.priority || 'med',
-      converted: note.converted || false,
-      created_at: note.createdAt,
-      task_id: note.taskId || null
-    };
-    const { error } = await sb.from('notepad_notes').upsert(row, { onConflict: 'id' });
-    if (error) {
-      // If table doesn't exist, try to create it then retry
-      if (error.code === '42P01') {
-        await npCreateTable();
-        await sb.from('notepad_notes').upsert(row, { onConflict: 'id' });
-      }
-    }
-  } catch (e) { /* silent fail — localStorage is source of truth */ }
-}
-
-async function npCreateTable() {
-  // Create the notepad_notes table via Supabase SQL API
-  if (!supabaseReady) return;
-  try {
-    await sb.rpc('exec_sql', {
-      sql: `CREATE TABLE IF NOT EXISTS notepad_notes (
-        id text PRIMARY KEY,
-        text text NOT NULL,
-        tag text DEFAULT 'general',
-        priority text DEFAULT 'med',
-        converted boolean DEFAULT false,
-        created_at timestamptz DEFAULT now(),
-        task_id text
-      );`
-    });
-  } catch(e) {
-    // RPC may not exist — that's OK, we'll use localStorage
-  }
-}
-
-async function npSyncAllToSupabase() {
-  // Push entire npNotes array to Supabase
-  if (!supabaseReady || !npNotes.length) return;
-  try {
-    const rows = npNotes.map(n => ({
-      id: n.id, text: n.text, tag: n.tag || 'general',
-      priority: n.priority || 'med', converted: n.converted || false,
-      created_at: n.createdAt, task_id: n.taskId || null
-    }));
-    await sb.from('notepad_notes').upsert(rows, { onConflict: 'id' });
-  } catch (e) { /* silent */ }
-}
-
-async function npDeleteRemote(id) {
-  npSaveAll(); // localStorage always first
-  if (!supabaseReady) return;
-  try { await sb.from('notepad_notes').delete().eq('id', id); } catch(e) {}
-}
-
-async function npLoadNotes() {
-  // Supabase pull is now integrated in pullFromSupabase().
-  // This function only loads from localStorage as offline fallback.
-  const saved = localStorage.getItem(NP_LS_KEY);
-  if (saved) {
-    try { npNotes = JSON.parse(saved); } catch(e) { npNotes = []; }
-  }
-}
-
-async function npSaveNote(){
-  const inp=document.getElementById('np-input');
-  const text=(inp?inp.value:'').trim();
-  if(!text){showToast('⚠','Write something first');return;}
-  const note={id:uid(),text,tag:npActiveTag,priority:npActivePri,converted:false,createdAt:new Date().toISOString()};
-  npNotes.unshift(note);
-  npSaveAll(); // localStorage first — synchronous
-  npClearForm();npRender();npSaRender();
-  showToast('✦','Note saved');
-  // Upsert just this note immediately
-  lastPushAt = Date.now();
-  if(supabaseReady){
-    try{
-      await sb.from('notepad_notes').upsert({
-        id:note.id,text:note.text,tag:note.tag,priority:note.priority,
-        converted:false,created_at:note.createdAt,task_id:null
-      },{onConflict:'id'});
-    }catch(e2){console.warn('np upsert failed:',e2);}
-  }
-}
-
-// ── Save note (standalone) ──
-async function npSaSaveNote(){
-  const inp=document.getElementById('np-input-sa');
-  const text=(inp?inp.value:'').trim();
-  if(!text){showToast('⚠','Write something first');return;}
-  const note={id:uid(),text,tag:npSaActiveTag,priority:npSaActivePri,converted:false,createdAt:new Date().toISOString()};
-  npNotes.unshift(note);
-  npSaveAll(); // localStorage first — synchronous
-  npSaClearForm();npSaRender();npRender();
-  showToast('✦','Note saved');
-  // Upsert just this note immediately
-  if(supabaseReady){
-    try{
-      await sb.from('notepad_notes').upsert({
-        id:note.id,text:note.text,tag:note.tag,priority:note.priority,
-        converted:false,created_at:note.createdAt,task_id:null
-      },{onConflict:'id'});
-    }catch(e2){console.warn('np sa upsert failed:',e2);}
-  }
-}
-
-// ── Delete note ──
-async function npDeleteNote(id,e){
-  if(e)e.stopPropagation();
-  npNotes=npNotes.filter(n=>n.id!==id);
-  npSaveAll();
-  npRender();npSaRender();showToast('↓','Note deleted');
-  // Delete immediately from Supabase
-  lastPushAt = Date.now();
-  if(supabaseReady){
-    try{ await sb.from('notepad_notes').delete().eq('id',id); }
-    catch(e2){ console.warn('np delete sync failed:',e2); }
-  }
-}
-
-// ── Convert modal ──
-function npOpenConvert(id,e){
-  if(e)e.stopPropagation();
-  npConvertingNote=npNotes.find(n=>n.id===id);
-  if(!npConvertingNote)return;
-  const firstLine=npConvertingNote.text.split('\n')[0].slice(0,80);
-  document.getElementById('np-conv-name').value=firstLine;
-  document.getElementById('np-conv-priority').value=npConvertingNote.priority;
-  document.getElementById('np-conv-status').value='todo';
-  document.getElementById('np-conv-due').value='';
-  document.getElementById('np-conv-preview').textContent=npConvertingNote.text;
-  const tagMap={clinisynq:'Clinisynq',research:'Research'};
-  const autoName=tagMap[npConvertingNote.tag]||'';
-  const match=projects.find(p=>p.name===autoName);
-  npPickProj(match?match.name:'',match?match.color:'');
-  document.getElementById('np-convert-modal').classList.add('open');
-}
-function npCloseConvert(){
-  document.getElementById('np-convert-modal').classList.remove('open');
-  npConvertingNote=null;npHideNewProj();
-}
-
-// ── Project dropdown ──
-function npBuildProjList(){
-  const list=document.getElementById('np-proj-dd-list');if(!list)return;
-  list.innerHTML=projects.map(p=>`
-    <div class="np-proj-option ${npSelProjName===p.name?'np-selected':''}"
-         onclick="npPickProj('${npEscAttr(p.name)}','${npEscAttr(p.color)}')">
-      <span style="width:9px;height:9px;border-radius:50%;background:${p.color};display:inline-block;flex-shrink:0;"></span>
-      <span>${npEscHtml(p.name)}</span>
-    </div>`).join('');
-}
-function npToggleProjDd(){
-  const dd=document.getElementById('np-proj-dd');
-  const trigger=document.getElementById('np-proj-trigger');
-  if(dd.classList.contains('open')){npCloseProjDd();return;}
-  npBuildProjList();
-  dd.classList.add('open');trigger.classList.add('open');
-}
-function npCloseProjDd(){
-  document.getElementById('np-proj-dd')?.classList.remove('open');
-  document.getElementById('np-proj-trigger')?.classList.remove('open');
-}
-function npPickProj(name,color){
-  npSelProjName=name;npSelProjColor=color;
-  document.getElementById('np-conv-project').value=name;
-  document.getElementById('np-proj-val').textContent=name||'— No Project —';
-  document.getElementById('np-proj-dot').style.background=name?color:'var(--border2)';
-  npCloseProjDd();npHideNewProj();
-}
-function npBuildColorSwatches(){
-  const el=document.getElementById('np-new-proj-colors');if(!el)return;
-  el.innerHTML=PROJ_COLORS.map(c=>`
-    <div class="np-color-swatch ${c===npNewProjColor?'active':''}"
-         style="background:${c};border-color:${c===npNewProjColor?'var(--text)':'transparent'}"
-         onclick="npPickColor('${c}',this)"></div>`).join('');
-}
-function npPickColor(c,el){
-  npNewProjColor=c;
-  document.querySelectorAll('.np-color-swatch').forEach(s=>{s.classList.remove('active');s.style.borderColor='transparent';});
-  el.classList.add('active');el.style.borderColor='var(--text)';
-}
-function npShowNewProj(){
-  npCloseProjDd();
-  const panel=document.getElementById('np-new-proj-panel');
-  if(panel){panel.style.display='flex';npBuildColorSwatches();}
-  const inp=document.getElementById('np-new-proj-name');
-  if(inp){inp.value='';inp.focus();}
-}
-function npHideNewProj(){
-  const panel=document.getElementById('np-new-proj-panel');
-  if(panel)panel.style.display='none';
-}
-async function npCreateProj(){
-  const name=(document.getElementById('np-new-proj-name')?.value||'').trim();
-  if(!name){showToast('⚠','Enter a project name');return;}
-  if(projects.find(p=>p.name===name)){showToast('⚠','Project already exists');return;}
-  const p={name,color:npNewProjColor,icon:'◆',desc:'',folder:''};
-  projects.push(p);saveProjects();
-  npHideNewProj();npPickProj(name,npNewProjColor);
-  render();showToast('◎',`"${name}" created`);
-}
-
-// ── Do convert ──
-async function npDoConvert(){
-  const name=(document.getElementById('np-conv-name')?.value||'').trim();
-  if(!name){showToast('⚠','Task name required');return;}
-  const priority=document.getElementById('np-conv-priority').value;
-  const status=document.getElementById('np-conv-status').value;
-  const project=(document.getElementById('np-conv-project')?.value||'').trim();
-  const due=document.getElementById('np-conv-due').value;
-  const taskId=uid();
-  tasks.push({id:taskId,name,project,priority,status,due,
-    desc:npConvertingNote.text,notes:'',taskUpdates:[],subtasks:[]});
-  save();
-  const note=npNotes.find(n=>n.id===npConvertingNote.id);
-  if(note){note.converted=true;note.taskId=taskId;}
-  npSaveAll(); // persist conversion state
-  npRender();npSaRender();render();npCloseConvert();
-  showToast('✦',`Task "${name}" created!`);
-  schedulePush(); // push task changes
-  // Also update the note's converted state in Supabase immediately
-  if(note && supabaseReady){
-    try{
-      await sb.from('notepad_notes').upsert({
-        id:note.id,text:note.text,tag:note.tag,priority:note.priority,
-        converted:true,created_at:note.createdAt,task_id:taskId
-      },{onConflict:'id'});
-    }catch(e2){console.warn('np convert sync failed:',e2);}
-  }
-}
-
-// ── Render notes (shared card builder) ──
-function npBuildNoteCards(list){
-  if(!list.length)return'';
-  return list.map(n=>`
-    <div class="np-note-card ${n.converted?'np-converted':''}">
-      <div class="np-card-top">
-        <div class="np-note-text ${n.converted?'np-strikethrough':''}">${npEscHtml(n.text)}</div>
-        <div class="np-card-actions">
-          ${!n.converted?`<div class="np-card-btn np-to-task" onclick="npOpenConvert('${n.id}',event)">→ Task</div>`:''}
-          <div class="np-card-btn np-del" onclick="npDeleteNote('${n.id}',event)">✕</div>
-        </div>
-      </div>
-      <div class="np-card-meta">
-        <span class="np-tag-badge" style="background:${npTagColor(n.tag)};color:${npTagText(n.tag)}">${n.tag}</span>
-        <span class="np-pri-label" style="color:${npPriColor(n.priority)}">${npPriLabel(n.priority)}</span>
-        ${n.converted?'<span class="np-converted-badge">✓ Task Created</span>':''}
-        <span class="np-time-label">${npFmtTime(n.createdAt)}</span>
-      </div>
-    </div>`).join('');
-}
-
-function npGetFiltered(filter){
-  if(filter==='pending')return npNotes.filter(n=>!n.converted);
-  if(filter==='converted')return npNotes.filter(n=>n.converted);
-  return npNotes;
-}
-
-// ── Render in-app notepad ──
-function npRender(){
-  const list=npGetFiltered(npActiveFilter);
-  const countEl=document.getElementById('np-count');
-  if(countEl)countEl.textContent=`${list.length} note${list.length!==1?'s':''}`;
-  const el=document.getElementById('np-notes-list');if(!el)return;
-  const msgs={all:'No notes yet — jot one!',pending:'No pending notes',converted:'No converted notes'};
-  el.innerHTML=list.length?npBuildNoteCards(list)
-    :`<div class="np-empty"><div class="np-empty-icon">📝</div><div class="np-empty-text">${msgs[npActiveFilter]}</div></div>`;
-}
-
-// ── Render standalone notepad ──
-function npSaRender(){
-  const list=npGetFiltered(npSaActiveFilter);
-  const countEl=document.getElementById('np-sa-count');
-  if(countEl)countEl.textContent=`${list.length} note${list.length!==1?'s':''}`;
-  const el=document.getElementById('np-sa-notes-list');if(!el)return;
-  const msgs={all:'No notes yet — jot one!',pending:'No pending notes',converted:'No converted notes'};
-  el.innerHTML=list.length?npBuildNoteCards(list)
-    :`<div class="np-empty"><div class="np-empty-icon">📝</div><div class="np-empty-text">${msgs[npActiveFilter]}</div></div>`;
-}
-
-// ── Wire modal and outside-click ──
-document.getElementById('np-convert-modal')?.addEventListener('click',function(e){
-  if(e.target===this)npCloseConvert();
-});
-document.addEventListener('click',e=>{
-  if(!document.getElementById('np-proj-wrap')?.contains(e.target))npCloseProjDd();
-});
-document.getElementById('np-input')?.addEventListener('keydown',e=>{
-  if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();npSaveNote();}
-});
-document.getElementById('np-input-sa')?.addEventListener('keydown',e=>{
-  if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();npSaSaveNote();}
-});
-
-// Note bootstrap handled in initSupabase (waits for Supabase, no localStorage flash)
-
-render(); npRender();
+render();
 </script>
 </body>
 </html>
