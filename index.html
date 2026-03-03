@@ -362,6 +362,12 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 }
 
 
+
+/* ── RESTORE BANNER ── */
+#restore-banner{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:5000;background:var(--accent);color:white;border-radius:14px;padding:14px 24px;display:none;align-items:center;gap:12px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;box-shadow:0 8px 32px rgba(123,104,255,0.5);white-space:nowrap;}
+#restore-banner .rb-spin{width:16px;height:16px;border:2px solid rgba(255,255,255,0.4);border-top-color:white;border-radius:50%;animation:rbspin 0.7s linear infinite;}
+@keyframes rbspin{to{transform:rotate(360deg);}}
+
 </style>
 </head>
 <body data-theme="dark">
@@ -444,6 +450,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   </div>
 </div>
 
+<div id="restore-banner"><div class="rb-spin"></div><span>Restoring your data from cloud…</span></div>
 <div class="shell">
   <aside class="sidebar">
     <div class="sidebar-header">
@@ -1059,14 +1066,19 @@ let lastPushAt = 0;
 let realtimeChannel = null;
 let pollTimer = null;
 
+function showRestoreBanner(){const b=document.getElementById('restore-banner');if(b)b.style.display='flex';}
+function hideRestoreBanner(){const b=document.getElementById('restore-banner');if(b)b.style.display='none';}
+
 async function initSupabase(){
-  // ── Step 1: Render immediately from localStorage (instant, no blank screen) ──
+  // ── Step 1: Render from localStorage instantly ──
   tasks    = JSON.parse(localStorage.getItem('cc_tasks')   ||'[]');
   timeBlocks = JSON.parse(localStorage.getItem('cc_tb')    ||'[]');
   updates  = JSON.parse(localStorage.getItem('cc_updates') ||'[]');
   projects = JSON.parse(localStorage.getItem('cc_projects')||'null')||[];
   npNotes  = JSON.parse(localStorage.getItem('np_notes_v2')||'[]');
   runMigration(); render(); npRender(); npSaRender();
+  // If localStorage is empty, data lives in Supabase — show banner while restoring
+  if(tasks.length===0 && projects.length===0) showRestoreBanner();
 
   // ── Step 2: Connect to Supabase and pull fresh data in background ──
   try{
@@ -1074,8 +1086,9 @@ async function initSupabase(){
     sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     supabaseReady = true;
     setSyncStatus('syncing');
-    await pullFromSupabase(); // updates UI again with fresh data when done
+    await pullFromSupabase();
     setSyncStatus('synced');
+    hideRestoreBanner();
     startRealtime();
     startPolling();
     document.addEventListener('visibilitychange', () => {
@@ -1089,6 +1102,7 @@ async function initSupabase(){
   }catch(e){
     console.warn('Supabase init failed:', e);
     setSyncStatus('offline');
+    hideRestoreBanner();
     setTimeout(retryConnection, 15000);
   }
 }
